@@ -459,9 +459,9 @@
         <div class="howtoSection">
           <h3>CONTROLS</h3>
           <ul>
-            <li><b>1P</b> — Mouse / WASD / Arrows aim · Click / Space fire</li>
-            <li><b>2P</b> — P1: WASD + Space/F · P2: Arrows + Enter</li>
-            <li><b>3P</b> — P1: WASD + Space/F · P2: Arrows + Enter · P3: Mouse + Click</li>
+            <li><b>1P</b> — Mouse aim · Click fire · Space / WASD fallback</li>
+            <li><b>2P</b> — P1: Mouse + Click · P2: WASD + F/Space</li>
+            <li><b>3P</b> — P1: Mouse + Click · P2: WASD + F/Space · P3: Arrows + Shift/Enter</li>
             <li><b>Esc / P</b> — Pause · <b>Sound button</b> — Mute</li>
           </ul>
         </div>
@@ -700,7 +700,7 @@ function makePlayer(id) {
   return {
     id,
     short: 'P' + (id + 1),
-    aim: new THREE.Vector2(id === 0 ? -0.35 : id === 1 ? 0.35 : 0, id === 2 ? -0.15 : 0.15),
+    aim: new THREE.Vector2(id === 0 ? 0 : id === 1 ? -0.35 : 0.35, id === 2 ? -0.15 : 0.15),
     score: 0, combo: 0, bestCombo: 0, hits: 0, shots: 0,
     multiplier: 1, multiTime: 0,
     taxTime: 0,
@@ -1121,9 +1121,14 @@ window.addEventListener('keydown', e => {
   if (k === 'escape' || k === 'p') { togglePause(); return; }
 
   if (G.state === 'playing') {
-    if (k === ' ' || k === 'f') fire(P[0]);
-    if (k === 'enter' && G.mode >= 2) fire(P[1]);
+    // P1 — Space only as a solo fallback (mouse is the primary fire)
+    if (G.mode === 1 && k === ' ') fire(P[0]);
+    // P2 — WASD player fires with F or Space
+    if (G.mode >= 2 && (k === 'f' || k === ' ')) fire(P[1]);
+    // P3 — Arrows player fires with Shift or Enter
+    if (G.mode >= 3 && (k === 'shift' || k === 'enter')) fire(P[2]);
   }
+
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
@@ -1132,15 +1137,14 @@ window.addEventListener('mousemove', e => {
   if (G.state !== 'playing' && G.state !== 'countdown') return;
   const nx = (e.clientX / window.innerWidth) * 2 - 1;
   const ny = -((e.clientY / window.innerHeight) * 2 - 1);
-  if (G.mode === 3) { P[2].aim.set(nx, ny); clampAim(P[2]); }
-  else if (G.mode === 1) { P[0].aim.set(nx, ny); clampAim(P[0]); }
+  P[0].aim.set(nx, ny);
+  clampAim(P[0]);
 });
 
 renderer.domElement.addEventListener('mousedown', e => {
   if (e.button !== 0) return;
   if (G.state !== 'playing') return;
-  if (G.mode === 1) fire(P[0]);
-  else if (G.mode === 3) fire(P[2]);
+  fire(P[0]); // P1 always fires with the mouse
 });
 
 document.addEventListener('visibilitychange', () => {
@@ -1166,30 +1170,37 @@ function applyAimDelta(p, ax, ay, dt) {
 }
 
 function updateAim(dt) {
-  // Player 1 — WASD (arrows too in 1P)
-  let ax = 0, ay = 0;
-  if (keys['w']) ay += 1;
-  if (keys['s']) ay -= 1;
-  if (keys['a']) ax -= 1;
-  if (keys['d']) ax += 1;
-  if (G.mode === 1) {
-    if (keys['arrowup']) ay += 1;
-    if (keys['arrowdown']) ay -= 1;
-    if (keys['arrowleft']) ax -= 1;
-    if (keys['arrowright']) ax += 1;
-  }
-  applyAimDelta(P[0], ax, ay, dt);
+  // P1 — mouse (handled in mousemove). Optional solo WASD fallback below.
 
-  // Player 2 — arrows
+  // Solo-only keyboard fallback so P1 works without a mouse
+  if (G.mode === 1) {
+    let ax = 0, ay = 0;
+    if (keys['w']) ay += 1;
+    if (keys['s']) ay -= 1;
+    if (keys['a']) ax -= 1;
+    if (keys['d']) ax += 1;
+    if (ax || ay) applyAimDelta(P[0], ax, ay, dt);
+  }
+
+  // P2 — WASD (all modes with 2+ players)
   if (G.mode >= 2) {
     let bx = 0, by = 0;
-    if (keys['arrowup']) by += 1;
-    if (keys['arrowdown']) by -= 1;
-    if (keys['arrowleft']) bx -= 1;
-    if (keys['arrowright']) bx += 1;
+    if (keys['w']) by += 1;
+    if (keys['s']) by -= 1;
+    if (keys['a']) bx -= 1;
+    if (keys['d']) bx += 1;
     applyAimDelta(P[1], bx, by, dt);
   }
-  // Player 3 — mouse (handled in mousemove)
+
+  // P3 — Arrow keys (3P only)
+  if (G.mode >= 3) {
+    let cx = 0, cy = 0;
+    if (keys['arrowup']) cy += 1;
+    if (keys['arrowdown']) cy -= 1;
+    if (keys['arrowleft']) cx -= 1;
+    if (keys['arrowright']) cx += 1;
+    applyAimDelta(P[2], cx, cy, dt);
+  }
 }
 
 /* =========================================================================
@@ -1393,21 +1404,21 @@ function hideOverlay() { overlay.classList.add('hidden'); }
 
 function refreshMenuUI() {
   const ctrl = el('ctrlList');
-  if (G.mode === 3) {
+    if (G.mode === 3) {
     ctrl.innerHTML =
-      `<div><b>P1 WASD</b> + Space/F</div>
-       <div><b>P2 Arrows</b> + Enter</div>
-       <div><b>P3 Mouse</b> + Click</div>
+      `<div><b>P1 Mouse</b> + Click</div>
+       <div><b>P2 WASD</b> + F / Space</div>
+       <div><b>P3 Arrows</b> + Shift / Enter</div>
        <div><b>Esc</b> pause</div>`;
   } else if (G.mode === 2) {
     ctrl.innerHTML =
-      `<div><b>P1 WASD</b> + Space/F</div>
-       <div><b>P2 Arrows</b> + Enter</div>
+      `<div><b>P1 Mouse</b> + Click</div>
+       <div><b>P2 WASD</b> + F / Space</div>
        <div><b>Esc</b> pause</div>`;
   } else {
     ctrl.innerHTML =
-      `<div><b>Mouse / WASD / Arrows</b> aim</div>
-       <div><b>Click / Space</b> fire</div>
+      `<div><b>Mouse</b> aim + click fire</div>
+       <div><b>Space</b> alt fire · <b>WASD</b> fallback aim</div>
        <div><b>Esc</b> pause</div>`;
   }
 
@@ -1471,7 +1482,7 @@ function applyPlayerColors() {
 
 /* ---------- game start / reset ---------- */
 function resetPlayer(p) {
-  p.aim.set(p.id === 0 ? -0.35 : p.id === 1 ? 0.35 : 0, p.id === 2 ? -0.15 : 0.15);
+  p.aim.set(p.id === 0 ? 0 : p.id === 1 ? -0.35 : 0.35, p.id === 2 ? -0.15 : 0.15);
   p.score = 0; p.combo = 0; p.bestCombo = 0;
   p.hits = 0; p.shots = 0;
   p.multiplier = 1; p.multiTime = 0;
