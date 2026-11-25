@@ -347,6 +347,7 @@
   /* ---- mobile tweaks ---- */
   body.mobile #playerStepper{display:none;}
   body.mobile .pcard{min-width:170px;}
+  body.mobile .pc-sub{flex-direction:column;gap:3px;}
   body.mobile .pc-timer{font-size:24px;}
   body.mobile .swatch{width:24px;height:24px;}
   body.mobile .controls{font-size:11px;}
@@ -358,7 +359,7 @@
   <div id="hudTop">
     <div id="playerCards">
       <div class="pcard p1" id="pcard1">
-        <div class="pc-top"><span class="pc-name">P1</span><span class="pc-timer" id="p1timer">60</span></div>
+        <div class="pc-top"><span class="pc-name">P1</span><span class="pc-timer" id="p1timer">1:00</span></div>
         <div class="pc-timerbar"><div class="pc-timerfill" id="p1tbar"></div></div>
         <div class="pc-sub"><span>SCORE<b id="p1score">0</b></span><span>COMBO<b id="p1combo">0</b></span><span>ACC<b id="p1acc">100%</b></span></div>
         <div class="pc-chips">
@@ -369,7 +370,7 @@
         </div>
       </div>
       <div class="pcard p2" id="pcard2">
-        <div class="pc-top"><span class="pc-name">P2</span><span class="pc-timer" id="p2timer">60</span></div>
+        <div class="pc-top"><span class="pc-name">P2</span><span class="pc-timer" id="p2timer">1:00</span></div>
         <div class="pc-timerbar"><div class="pc-timerfill" id="p2tbar"></div></div>
         <div class="pc-sub"><span>SCORE<b id="p2score">0</b></span><span>COMBO<b id="p2combo">0</b></span><span>ACC<b id="p2acc">100%</b></span></div>
         <div class="pc-chips">
@@ -380,7 +381,7 @@
         </div>
       </div>
       <div class="pcard p3" id="pcard3">
-        <div class="pc-top"><span class="pc-name">P3</span><span class="pc-timer" id="p3timer">60</span></div>
+        <div class="pc-top"><span class="pc-name">P3</span><span class="pc-timer" id="p3timer">1:00</span></div>
         <div class="pc-timerbar"><div class="pc-timerfill" id="p3tbar"></div></div>
         <div class="pc-sub"><span>SCORE<b id="p3score">0</b></span><span>COMBO<b id="p3combo">0</b></span><span>ACC<b id="p3acc">100%</b></span></div>
         <div class="pc-chips">
@@ -391,7 +392,7 @@
         </div>
       </div>
       <div class="pcard p4" id="pcard4">
-        <div class="pc-top"><span class="pc-name">P4</span><span class="pc-timer" id="p4timer">60</span></div>
+        <div class="pc-top"><span class="pc-name">P4</span><span class="pc-timer" id="p4timer">1:00</span></div>
         <div class="pc-timerbar"><div class="pc-timerfill" id="p4tbar"></div></div>
         <div class="pc-sub"><span>SCORE<b id="p4score">0</b></span><span>COMBO<b id="p4combo">0</b></span><span>ACC<b id="p4acc">100%</b></span></div>
         <div class="pc-chips">
@@ -464,7 +465,7 @@
         <label>ROUND LENGTH</label>
         <div class="stepper">
           <button class="stepBtn" id="durMinus" aria-label="Decrease duration">−</button>
-          <span class="stepValue" id="durValue">60s</span>
+          <span class="stepValue" id="durValue">1:00</span>
           <button class="stepBtn" id="durPlus" aria-label="Increase duration">+</button>
         </div>
       </div>
@@ -543,7 +544,7 @@
             <li>Time: <b>+8s</b> instead of +4s</li>
             <li>Multi: <b>×6</b> instead of ×3</li>
             <li>Freeze: <b>6s</b> instead of 3s</li>
-            <li>Trap: <b>−600</b> instead of −150</li>
+            <li>Trap: <b>−1000</b> instead of −200</li>
             <li>Tax: <b>−50%</b> &amp; taxed for 10s (vs −30% &amp; 6s)</li>
           </ul>
         </div>
@@ -559,7 +560,7 @@
         <div class="howtoSection">
           <h3>RISK ORBS</h3>
           <ul>
-            <li><span class="k">Red Trap</span> — −150 pts and your combo resets.</li>
+            <li><span class="k">Red Trap</span> — −200 pts and your combo resets.</li>
             <li><span class="k">Purple Tax</span> — instantly lose 30% of your score · for 6s all points earned are halved.</li>
           </ul>
         </div>
@@ -738,10 +739,8 @@ const sndOver   = () => { tone(600, 0.55, 'sawtooth', 0.05, 80); };
 const sndBeep   = () => tone(660, 0.09, 'square', 0.04);
 const sndGo     = () => { tone(1320, 0.18, 'square', 0.05, 1980); };
 const sndBullseye = () => { tone(1600, 0.09, 'sine', 0.07, 2400); setTimeout(() => tone(2400, 0.16, 'sine', 0.06, 3200), 80); };
-const sndTrapBullseye = () => { tone(190, 0.42, 'sawtooth', 0.075, 42); setTimeout(() => tone(70, 0.55, 'square', 0.055, 30), 20); tone(311, 0.40, 'square', 0.045, 300); tone(330, 0.40, 'square', 0.045, 318);}, 90);
-
-  setTimeout(() => tone(120, 0.30, 'sawtooth', 0.05, 50), 260);
-};
+const sndTrapBullseye = () => { tone(190, 0.42, 'sawtooth', 0.075, 42); setTimeout(() => tone(70, 0.55, 'square', 0.055, 30), 20); tone(311, 0.40, 'square', 0.045, 300); tone(330, 0.40, 'square', 0.045, 318); setTimeout(() => tone(120, 0.30, 'sawtooth', 0.05, 50), 260);};
+const sndBullTax = () => { tone(95, 0.85, 'sawtooth', 0.09, 28); tone(48, 0.95, 'square', 0.075, 22); tone(233, 0.62, 'sawtooth', 0.065, 55); setTimeout(() => tone(62, 0.75, 'square', 0.08, 24), 180);};
 
 /* =========================================================================
    MOBILE DETECTION
@@ -806,7 +805,7 @@ const ORB_DEFS = {
   target: { color: 0x4169ff, type: 'reward', life: 3.2, label: 'TARGET CORE', visRadius: 0.48,
     desc: '+100 pts base, boosted by combo (max ×20). 85% of spawns. Blue. Bullseye: 2× points.' },
   trap:   { color: 0xff1744, type: 'risk',   life: 3.8, label: 'TRAP SPIKE', visRadius: 0.50,
-    desc: '−150 pts and your combo resets. Red. Bullseye: −600 pts.' },
+    desc: '−200 pts and your combo resets. Red. Bullseye: −1000 pts.' },
   tax:    { color: 0xb300ff, type: 'risk',   life: 6.0, label: 'TAX ORB', visRadius: 0.40,
     desc: 'Lose 30% of your score. For 6s all points earned are halved. Purple. Bullseye: −50% and taxed 10s.' },
   time:   { color: 0xffe600, type: 'reward', life: 2.8, label: 'TIME SHARD', visRadius: 0.65,
@@ -1122,6 +1121,12 @@ const UI = P.map((p, i) => ({
 }));
 
 function setText(node, v) { if (node.__t !== v) { node.__t = v; node.textContent = v; } }
+function formatTime(seconds) {
+  const total = Math.max(0, Math.ceil(seconds));
+  const minutes = Math.floor(total / 60);
+  const remainder = String(total % 60).padStart(2, '0');
+  return minutes + ':' + remainder;
+}
 function accuracy(p) { return p.shots === 0 ? 100 : (p.hits / p.shots) * 100; }
 
 function updateHUD() {
@@ -1131,8 +1136,8 @@ function updateHUD() {
     setText(u.combo, String(p.combo));
     setText(u.acc, accuracy(p).toFixed(0) + '%');
 
-    const tDisplay = p.out ? 0 : Math.ceil(p.timeLeft);
-    setText(u.timer, String(tDisplay));
+    const tDisplay = p.out ? 0 : p.timeLeft;
+    setText(u.timer, formatTime(tDisplay));
     u.timer.classList.toggle('warn', !p.out && p.timeLeft > 0 && p.timeLeft <= 10);
     u.timer.classList.toggle('zero', p.out);
 
@@ -1231,11 +1236,26 @@ window.addEventListener('mousemove', e => {
   clampAim(P[0]);
 });
 
+let lastTouchAt = 0;
+
 renderer.domElement.addEventListener('mousedown', e => {
-  if (e.button !== 0) return;
+  if (e.button !== 0 || Date.now() - lastTouchAt < 700) return;
   if (G.state !== 'playing') return;
   fire(P[0]);
 });
+
+renderer.domElement.addEventListener('touchstart', e => {
+  e.preventDefault();
+  lastTouchAt = Date.now();
+  const t = e.changedTouches[0];
+  if (!t) return;
+  P[0].aim.set(
+    (t.clientX / window.innerWidth) * 2 - 1,
+    -((t.clientY / window.innerHeight) * 2 - 1)
+  );
+  clampAim(P[0]);
+  fire(P[0]);
+}, { passive: false });
 
 renderer.domElement.addEventListener('touchmove', e => {
   if (G.state !== 'playing' && G.state !== 'countdown') return;
@@ -1429,7 +1449,7 @@ if (isBull) {
 
   switch (target.type) {
       case 'trap': {
-      const penalty = isBull ? 600 : 150;
+      const penalty = isBull ? 1000 : 200;
       p.score = Math.max(0, p.score - penalty);
       p.combo = 0;
       G.shake = isBull ? 1.15 : 0.75;
@@ -1449,7 +1469,7 @@ if (isBull) {
       p.taxTime = dur;
       popup(point, isBull ? 'BULLSEYE −50%' : '−30%', 0xb300ff, isBull);
       addFeed(p, (isBull ? 'BULLSEYE TAX −' : 'TAX −') + loss + ' · ' + dur + 's half');
-      if (isBull) sndTrapBullseye();
+      if (isBull) sndBullTax();
       else        sndTax();
       flashScreen('taxFlash');
       break;
@@ -1587,7 +1607,7 @@ function updateStepperUI() {
   playersMinus.disabled = (G.mode <= 1) || isMobile;
   playersPlus.disabled = (G.mode >= 4) || isMobile;
 
-  durValue.textContent = G.duration + 's';
+  durValue.textContent = formatTime(G.duration);
   durMinus.disabled = durIndex <= 0;
   durPlus.disabled = durIndex >= DURATIONS.length - 1;
 }
@@ -1654,7 +1674,7 @@ function setPlayerCount(n) {
 function setDurationIndex(i) {
   durIndex = Math.max(0, Math.min(DURATIONS.length - 1, i));
   G.duration = DURATIONS[durIndex];
-  durValue.textContent = G.duration + 's';
+  durValue.textContent = formatTime(G.duration);
   if (G.state === 'menu') {
     for (let j = 0; j < 4; j++) P[j].timeLeft = G.duration;
     updateHUD();
