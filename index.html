@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>NEON AIM SHOWDOWN — 3P Arena</title>
+<title>NEON AIM SHOWDOWN - Max 4P</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
     --p1:#2f7dff;
     --p2:#ff2b2b;
     --p3:#3cff3c;
+    --p4:#bb44ff;
     --violet:#8b5cff;
     --gold:#ffe600;
     --lime:#22ff44;
@@ -33,7 +34,7 @@
     font-family:'Orbitron','Segoe UI',system-ui,sans-serif;
     user-select:none;-webkit-user-select:none;cursor:none;
   }
-  canvas{display:block;will-change:transform;}
+  canvas{display:block;will-change:transform;touch-action:none;}
 
   /* ---------------- HUD ---------------- */
   #hud{position:fixed;inset:0;pointer-events:none;z-index:10;}
@@ -56,8 +57,9 @@
   }
   .pcard.taxed{box-shadow:inset 0 0 26px rgba(179,0,255,.35),0 0 18px rgba(179,0,255,.25);}
   .pcard.out{opacity:.42;filter:grayscale(.65);}
-  body.mode1 .pcard.p2,body.mode1 .pcard.p3,
-  body.mode2 .pcard.p3{display:none;}
+  body.mode1 .pcard.p2,body.mode1 .pcard.p3,body.mode1 .pcard.p4,
+  body.mode2 .pcard.p3,body.mode2 .pcard.p4,
+  body.mode3 .pcard.p4{display:none;}
 
   .pc-top{display:flex;align-items:center;justify-content:space-between;gap:16px;}
   .pc-name{
@@ -152,8 +154,10 @@
   }
   .xhair.hit .x-ring{animation:hitpop .22s ease-out;}
   .xhair.hit .x-dot{animation:dotpop .22s ease-out;}
+  .xhair.bullseye .x-ring{animation:bullpop .35s ease-out;}
   @keyframes hitpop{0%{transform:scale(1.55);border-color:#fff;box-shadow:0 0 22px #fff,0 0 44px var(--c);}100%{transform:scale(1);}}
   @keyframes dotpop{0%{transform:scale(2.6);background:#fff;}100%{transform:scale(1);}}
+  @keyframes bullpop{0%{transform:scale(2.2);border-color:#ffe600;box-shadow:0 0 30px #ffe600,0 0 60px #ffe600;}100%{transform:scale(1);}}
 
   /* ---------------- Countdown & flashes ---------------- */
   #countdown{
@@ -202,29 +206,40 @@
 
   .row{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap;}
 
-  .modeBtn{
-    font-family:inherit;font-size:12px;font-weight:900;letter-spacing:.2em;
-    padding:12px 26px;border-radius:3px;cursor:pointer;
-    background:rgba(0,240,255,.06);color:#8fd8ff;
-    border:1px solid rgba(0,240,255,.35);transition:all .15s;
+  /* ---- stepper controls ---- */
+  .stepperRow{
+    display:flex;align-items:center;justify-content:center;
+    gap:14px;margin-top:14px;flex-wrap:wrap;
   }
-  .modeBtn:hover{background:rgba(0,240,255,.16);color:#fff;}
-  .modeBtn.active{
-    background:linear-gradient(120deg,rgba(0,240,255,.9),rgba(139,92,255,.9));
-    color:#04121a;border-color:transparent;
-    box-shadow:0 0 22px rgba(0,240,255,.6),0 0 48px rgba(139,92,255,.4);
+  .stepperRow > label{
+    font-size:10px;letter-spacing:.26em;color:#7d7bff;font-weight:700;
+    min-width:120px;text-align:right;
   }
-
-  .sliderRow{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:22px;flex-wrap:wrap;}
-  .sliderRow label{font-size:10px;letter-spacing:.26em;color:#7d7bff;font-weight:700;}
-  #durSlider{
-    -webkit-appearance:none;appearance:none;width:min(48vw,260px);height:4px;border-radius:2px;outline:none;cursor:pointer;
-    background:linear-gradient(90deg,var(--p1),var(--violet),var(--p2));
-    box-shadow:0 0 12px rgba(0,240,255,.5);
+  .stepper{
+    display:flex;align-items:center;
+    border:1px solid rgba(0,240,255,.35);border-radius:3px;
+    background:rgba(0,240,255,.06);overflow:hidden;
   }
-  #durSlider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--p1),0 0 22px var(--p1);cursor:pointer;}
-  #durSlider::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--p1),0 0 22px var(--p1);cursor:pointer;}
-  #durValue{font-size:14px;font-weight:900;color:#fff;min-width:56px;text-shadow:0 0 12px var(--p1);}
+  .stepBtn{
+    font-family:inherit;font-size:20px;font-weight:900;line-height:1;
+    color:#8fd8ff;background:transparent;border:none;
+    padding:8px 0;cursor:pointer;transition:all .15s;
+    width:44px;height:44px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .stepBtn:hover:not(:disabled){
+    background:rgba(0,240,255,.2);color:#fff;
+    box-shadow:inset 0 0 16px rgba(0,240,255,.5);
+  }
+  .stepBtn:active:not(:disabled){background:rgba(0,240,255,.35);}
+  .stepBtn:disabled{opacity:.28;cursor:not-allowed;}
+  .stepValue{
+    font-size:14px;font-weight:900;color:#fff;
+    text-shadow:0 0 12px var(--p1);
+    min-width:64px;text-align:center;padding:0 8px;
+    border-left:1px solid rgba(0,240,255,.2);
+    border-right:1px solid rgba(0,240,255,.2);
+  }
 
   /* ---- color picker ---- */
   #colorSection{margin-top:22px;}
@@ -327,6 +342,14 @@
   .howtoSection li::before{content:'▸';position:absolute;left:0;color:var(--p2);}
   .howtoSection b{color:#fff;}
   .howtoSection .k{color:var(--p1);font-weight:700;}
+  .howtoSection .gold{color:var(--gold);font-weight:900;}
+
+  /* ---- mobile tweaks ---- */
+  body.mobile #playerStepper{display:none;}
+  body.mobile .pcard{min-width:170px;}
+  body.mobile .pc-timer{font-size:24px;}
+  body.mobile .swatch{width:24px;height:24px;}
+  body.mobile .controls{font-size:11px;}
 </style>
 </head>
 <body>
@@ -367,6 +390,17 @@
           <span class="chip out" id="p3out">OUT</span>
         </div>
       </div>
+      <div class="pcard p4" id="pcard4">
+        <div class="pc-top"><span class="pc-name">P4</span><span class="pc-timer" id="p4timer">60</span></div>
+        <div class="pc-timerbar"><div class="pc-timerfill" id="p4tbar"></div></div>
+        <div class="pc-sub"><span>SCORE<b id="p4score">0</b></span><span>COMBO<b id="p4combo">0</b></span><span>ACC<b id="p4acc">100%</b></span></div>
+        <div class="pc-chips">
+          <span class="chip multi" id="p4multi">×3</span>
+          <span class="chip tax" id="p4tax">TAXED</span>
+          <span class="chip freeze" id="p4freeze">FROZEN</span>
+          <span class="chip out" id="p4out">OUT</span>
+        </div>
+      </div>
     </div>
 
     <div class="centerblock">
@@ -400,6 +434,12 @@
     <div class="x-t t"></div><div class="x-t b"></div>
     <div class="x-h l"></div><div class="x-h r"></div>
   </div>
+  <div class="xhair p4" id="xh4">
+    <span class="x-label">P4</span>
+    <div class="x-ring"></div><div class="x-dot"></div>
+    <div class="x-t t"></div><div class="x-t b"></div>
+    <div class="x-h l"></div><div class="x-h r"></div>
+  </div>
 
   <div id="countdown">3</div>
   <div id="trapFlash"></div>
@@ -412,15 +452,21 @@
     <!-- ============ MENU ============ -->
     <div id="menuView">
       <h1>NEON<span>AIM</span>SHOWDOWN</h1>
-      <div class="row">
-        <button class="modeBtn active" data-mode="1">1 PLAYER</button>
-        <button class="modeBtn" data-mode="2">2 PLAYERS</button>
-        <button class="modeBtn" data-mode="3">3 PLAYERS</button>
+      <div class="stepperRow" id="playerStepper">
+        <label>PLAYERS</label>
+        <div class="stepper">
+          <button class="stepBtn" id="playersMinus" aria-label="Decrease players">−</button>
+          <span class="stepValue" id="playersValue">1</span>
+          <button class="stepBtn" id="playersPlus" aria-label="Increase players">+</button>
+        </div>
       </div>
-      <div class="sliderRow">
+      <div class="stepperRow">
         <label>ROUND LENGTH</label>
-        <input id="durSlider" type="range" min="20" max="180" step="5" value="60">
-        <span id="durValue">60s</span>
+        <div class="stepper">
+          <button class="stepBtn" id="durMinus" aria-label="Decrease duration">−</button>
+          <span class="stepValue" id="durValue">60s</span>
+          <button class="stepBtn" id="durPlus" aria-label="Increase duration">+</button>
+        </div>
       </div>
       <div id="colorSection">
         <div class="colorLabel">AIM COLORS</div>
@@ -456,7 +502,8 @@
       <div class="wikiGrid" id="wikiGrid"></div>
       <div class="wikiNote">
         85% of spawns are normal blue targets · 10% are risk orbs · 5% are rewards.<br>
-        Every orb has a unique color. Combo raises target value · missing or hitting a risk orb resets your combo.
+        Every orb has a unique color. Combo raises target value · missing or hitting a risk orb resets your combo.<br>
+        <b style="color:#ffe600">BULLSEYE:</b> hit the inner 30% of any orb's area to double its effect.
       </div>
       <div><button id="wikiBackBtn" class="cta" style="margin-top:22px">BACK</button></div>
     </div>
@@ -473,9 +520,11 @@
           <h3>CONTROLS</h3>
           <ul>
             <li><b>1P</b> — Mouse aim · Click fire · Space fallback</li>
-            <li><b>2P</b> — P1: Mouse + Click · P2: WASD + F/Space</li>
-            <li><b>3P</b> — P1: Mouse + Click · P2: WASD + F/Space · P3: Arrows + Enter/Shift/Ctrl</li>
-            <li><b>Esc / P</b> — Pause · <b>Sound button</b> — Mute</li>
+            <li><b>2P</b> — P1: Mouse + Click · P2: Arrows + Enter/Shift/Ctrl</li>
+            <li><b>3P</b> — P3: WASD + F</li>
+            <li><b>4P</b> — P4: IJKL + P</li>
+            <li><b>Mobile</b> — Tap to aim &amp; fire (1P only)</li>
+            <li><b>Esc</b> — Pause · <b>Sound button</b> — Mute</li>
           </ul>
         </div>
         <div class="howtoSection">
@@ -484,6 +533,18 @@
             <li>Blue target: <b>100 pts</b> + 10 per combo (max combo ×20)</li>
             <li>Combo resets on a miss or on a risk orb</li>
             <li>Multiplier orb: <b>×3</b> points for 5s</li>
+            <li><span class="gold">BULLSEYE</span> — hit the inner 30% of the orb area to <b>double the effect</b> of any orb.</li>
+          </ul>
+        </div>
+        <div class="howtoSection">
+          <h3>BULLSEYE EFFECTS</h3>
+          <ul>
+            <li>Target: <b>2× points</b></li>
+            <li>Time: <b>+8s</b> instead of +4s</li>
+            <li>Multi: <b>×6</b> instead of ×3</li>
+            <li>Freeze: <b>6s</b> instead of 3s</li>
+            <li>Trap: <b>−600</b> instead of −150</li>
+            <li>Tax: <b>−50%</b> &amp; taxed for 10s (vs −30% &amp; 6s)</li>
           </ul>
         </div>
         <div class="howtoSection">
@@ -499,15 +560,7 @@
           <h3>RISK ORBS</h3>
           <ul>
             <li><span class="k">Red Trap</span> — −150 pts and your combo resets.</li>
-            <li><span class="k">Purple Tax</span> — instantly lose 30% of your score · for 7s all points earned are halved.</li>
-          </ul>
-        </div>
-        <div class="howtoSection">
-          <h3>REWARD ORBS</h3>
-          <ul>
-            <li><span class="k">Yellow Time</span> — +4s on your clock.</li>
-            <li><span class="k">Green Multi</span> — ×3 points for 5s.</li>
-            <li><span class="k">Turquoise Freeze</span> — your clock pauses for 3s.</li>
+            <li><span class="k">Purple Tax</span> — instantly lose 30% of your score · for 6s all points earned are halved.</li>
           </ul>
         </div>
       </div>
@@ -644,7 +697,7 @@ const decor = [];
 }
 
 /* =========================================================================
-   AUDIO (master gain + mute)
+   AUDIO
    ========================================================================= */
 let actx = null, master = null;
 let muted = localStorage.getItem('neonMuted') === '1';
@@ -674,23 +727,32 @@ function tone(freq, dur, type, vol, slideTo) {
   osc.connect(gain); gain.connect(master);
   osc.start(t); osc.stop(t + dur + 0.03);
 }
-const sndShoot = () => { tone(940, 0.06, 'square', 0.035, 250); tone(160, 0.10, 'sawtooth', 0.028, 55); };
-const sndHit   = () => { tone(1150, 0.08, 'sine', 0.06, 1900); tone(620, 0.15, 'triangle', 0.04, 1300); };
-const sndMiss  = () => { tone(150, 0.12, 'sine', 0.038, 70); };
-const sndTrap  = () => { tone(220, 0.30, 'sawtooth', 0.06, 60); tone(90, 0.35, 'square', 0.045, 40); };
-const sndTax   = () => { tone(330, 0.16, 'sawtooth', 0.06, 120); setTimeout(() => tone(150, 0.32, 'square', 0.05, 50), 110); };
-const sndBonus = () => { tone(700, 0.08, 'sine', 0.05, 1400); setTimeout(() => tone(1400, 0.12, 'sine', 0.04, 2100), 70); };
-const sndStart = () => { tone(400, 0.10, 'square', 0.045, 800); setTimeout(() => tone(800, 0.16, 'square', 0.045, 1400), 90); };
-const sndOver  = () => { tone(600, 0.55, 'sawtooth', 0.05, 80); };
-const sndBeep  = () => tone(660, 0.09, 'square', 0.04);
-const sndGo    = () => { tone(1320, 0.18, 'square', 0.05, 1980); };
+const sndShoot  = () => { tone(940, 0.06, 'square', 0.035, 250); tone(160, 0.10, 'sawtooth', 0.028, 55); };
+const sndHit    = () => { tone(1150, 0.08, 'sine', 0.06, 1900); tone(620, 0.15, 'triangle', 0.04, 1300); };
+const sndMiss   = () => { tone(150, 0.12, 'sine', 0.038, 70); };
+const sndTrap   = () => { tone(220, 0.30, 'sawtooth', 0.06, 60); tone(90, 0.35, 'square', 0.045, 40); };
+const sndTax    = () => { tone(330, 0.16, 'sawtooth', 0.06, 120); setTimeout(() => tone(150, 0.32, 'square', 0.05, 50), 110); };
+const sndBonus  = () => { tone(700, 0.08, 'sine', 0.05, 1400); setTimeout(() => tone(1400, 0.12, 'sine', 0.04, 2100), 70); };
+const sndStart  = () => { tone(400, 0.10, 'square', 0.045, 800); setTimeout(() => tone(800, 0.16, 'square', 0.045, 1400), 90); };
+const sndOver   = () => { tone(600, 0.55, 'sawtooth', 0.05, 80); };
+const sndBeep   = () => tone(660, 0.09, 'square', 0.04);
+const sndGo     = () => { tone(1320, 0.18, 'square', 0.05, 1980); };
+const sndBullseye = () => { tone(1600, 0.09, 'sine', 0.07, 2400); setTimeout(() => tone(2400, 0.16, 'sine', 0.06, 3200), 80); };
+
+/* =========================================================================
+   MOBILE DETECTION
+   ========================================================================= */
+ const isMobile = (
+   window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+ ) || /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent);
+ if (isMobile) document.body.classList.add('mobile');
 
 /* =========================================================================
    GAME STATE
    ========================================================================= */
 const G = {
   mode: 1,
-  state: 'menu',           // menu | countdown | playing | paused | over
+  state: 'menu',
   duration: 60,
   elapsed: 0,
   countdown: 3.0,
@@ -708,15 +770,20 @@ const PLAYER_PALETTE = [
   { name:'PINK',   css:'#ff5fbf' },
   { name:'WHITE',  css:'#ffffff' }
 ];
-// Defaults: P1 blue(4), P2 red(0), P3 green(3) — all distinct
-const playerColorIdx = [4, 0, 3];
+
+// P1=blue(4), P2=red(0), P3=green(3), P4=purple(5)
+const playerColorIdx = [4, 0, 3, 5];
+
+// starting aims per player id
+const STARTS = [[0,0],[-0.4,0.18],[0.4,0.18],[0,-0.28]];
 
 function makePlayer(id) {
   return {
     id,
     short: 'P' + (id + 1),
-    aim: new THREE.Vector2(id === 0 ? 0 : id === 1 ? -0.35 : 0.35, id === 2 ? -0.15 : 0.15),
+    aim: new THREE.Vector2(STARTS[id][0], STARTS[id][1]),
     score: 0, combo: 0, bestCombo: 0, hits: 0, shots: 0,
+    bullseyes: 0,
     multiplier: 1, multiTime: 0,
     taxTime: 0,
     freeze: 0,
@@ -726,24 +793,24 @@ function makePlayer(id) {
     crosshair: document.getElementById('xh' + (id + 1))
   };
 }
-const P = [makePlayer(0), makePlayer(1), makePlayer(2)];
+const P = [makePlayer(0), makePlayer(1), makePlayer(2), makePlayer(3)];
 
 /* =========================================================================
-   ORB DEFINITIONS — 6 unique, distinct colors
+   ORB DEFINITIONS
    ========================================================================= */
 const ORB_DEFS = {
-  target: { color: 0x4169ff, type: 'reward', life: 3.2, label: 'TARGET CORE',
-    desc: '+100 pts base, boosted by combo (max ×20). 85% of spawns. Blue.' },
-  trap:   { color: 0xff1744, type: 'risk',   life: 3.8, label: 'TRAP SPIKE',
-    desc: '−150 pts and your combo resets. Screen shake. Red.' },
-  tax:    { color: 0xb300ff, type: 'risk',   life: 6.0, label: 'TAX ORB',
-    desc: 'Instantly lose 30% of your score. For 7s all points earned are halved. Purple.' },
-  time:   { color: 0xffe600, type: 'reward', life: 2.8, label: 'TIME SHARD',
-    desc: '+4 seconds added to your personal clock. Yellow.' },
-  multi:  { color: 0x22ff44, type: 'reward', life: 2.8, label: 'MULTIPLIER',
-    desc: '×3 points on everything you hit for 5 seconds. Green.' },
-  freeze: { color: 0x00ffd5, type: 'reward', life: 2.8, label: 'FREEZE CORE',
-    desc: 'Pauses your personal clock for 3 seconds. Turquoise.' }
+  target: { color: 0x4169ff, type: 'reward', life: 3.2, label: 'TARGET CORE', visRadius: 0.48,
+    desc: '+100 pts base, boosted by combo (max ×20). 85% of spawns. Blue. Bullseye: 2× points.' },
+  trap:   { color: 0xff1744, type: 'risk',   life: 3.8, label: 'TRAP SPIKE', visRadius: 0.50,
+    desc: '−150 pts and your combo resets. Red. Bullseye: −600 pts.' },
+  tax:    { color: 0xb300ff, type: 'risk',   life: 6.0, label: 'TAX ORB', visRadius: 0.40,
+    desc: 'Lose 30% of your score. For 6s all points earned are halved. Purple. Bullseye: −50% and taxed 10s.' },
+  time:   { color: 0xffe600, type: 'reward', life: 2.8, label: 'TIME SHARD', visRadius: 0.65,
+    desc: '+4 seconds added to your personal clock. Yellow. Bullseye: +8s.' },
+  multi:  { color: 0x22ff44, type: 'reward', life: 2.8, label: 'MULTIPLIER', visRadius: 0.60,
+    desc: '×3 points on everything you hit for 5 seconds. Green. Bullseye: ×6.' },
+  freeze: { color: 0x00ffd5, type: 'reward', life: 2.8, label: 'FREEZE CORE', visRadius: 0.42,
+    desc: 'Pauses your personal clock for 3 seconds. Turquoise. Bullseye: 6s.' }
 };
 
 const CORE_GEO = {
@@ -792,7 +859,6 @@ function findSpawnPos() {
   return null;
 }
 
-/* ---- spawn distribution: 85% normal · 10% risk (trap/tax 2:1) · 5% reward ---- */
 function pickType() {
   const r = Math.random();
   if (r < 0.85) return 'target';
@@ -839,6 +905,7 @@ function spawnTarget(forceType) {
     type, group, coreMat, ringMat, ring2Mat,
     color,
     baseColor: new THREE.Color(color),
+    visRadius: def.visRadius,
     age: 0,
     life: def.life * (0.9 + Math.random() * 0.25),
     baseY: pos.y,
@@ -984,37 +1051,37 @@ function shockRing(pos, color) {
   });
 }
 
-function popup(pos, text, color) {
+function popup(pos, text, color, big) {
   const canvas = document.createElement('canvas');
-  canvas.width = 256; canvas.height = 128;
+  canvas.width = 768; canvas.height = 128;
   const ctx = canvas.getContext('2d');
-  ctx.font = '900 74px Orbitron, Arial, sans-serif';
+  ctx.font = '900 ' + (big ? 60 : 75) + 'px Orbitron, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const hex = '#' + new THREE.Color(color).getHexString();
+
   ctx.shadowColor = hex;
-  ctx.shadowBlur = 30;
+  ctx.shadowBlur = 2;
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(text, 128, 66);
-  ctx.shadowBlur = 12;
-  ctx.fillText(text, 128, 66);
+  ctx.fillText(text, 384, 64);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   const mat = new THREE.SpriteMaterial({
     map: tex, transparent: true, opacity: 1,
-    depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending
+    depthTest: false, depthWrite: false, blending: THREE.NormalBlending
   });
   const sp = new THREE.Sprite(mat);
   sp.position.copy(pos);
-  sp.scale.set(2.1, 1.05, 1);
+  const w = 4;
+  sp.scale.set(w, w * 0.2, 1);
   scene.add(sp);
 
   let t = 0;
-  const LIFE_T = 0.9;
+  const LIFE_T = 0.95;
   effects.push(dt => {
     t += dt;
-    sp.position.y += dt * 2.0;
+    sp.position.y += dt * 3.0;
     const k = t / LIFE_T;
     mat.opacity = Math.max(0, 1 - k * k);
     if (t > LIFE_T) { scene.remove(sp); tex.dispose(); mat.dispose(); return false; }
@@ -1030,7 +1097,9 @@ const countdownEl = el('countdown');
 const overlay = el('overlay');
 const menuView = el('menuView'), pauseView = el('pauseView');
 const resultView = el('resultView'), wikiView = el('wikiView'), howtoView = el('howtoView');
-const durSlider = el('durSlider'), durValue = el('durValue');
+const durValue = el('durValue'), playersValue = el('playersValue');
+const playersMinus = el('playersMinus'), playersPlus = el('playersPlus');
+const durMinus = el('durMinus'), durPlus = el('durPlus');
 const bestLine = el('bestLine'), feedEl = el('feed');
 const pauseBtn = el('pauseBtn'), muteBtn = el('muteBtn');
 const uiMode = el('uiMode');
@@ -1052,7 +1121,7 @@ function setText(node, v) { if (node.__t !== v) { node.__t = v; node.textContent
 function accuracy(p) { return p.shots === 0 ? 100 : (p.hits / p.shots) * 100; }
 
 function updateHUD() {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     const p = P[i], u = UI[i];
     setText(u.score, String(p.score));
     setText(u.combo, String(p.combo));
@@ -1108,7 +1177,7 @@ function updateCrosshairs() {
   const active = (G.state === 'playing' || G.state === 'countdown');
   const w = window.innerWidth, h = window.innerHeight;
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     const p = P[i];
     const show = active && i < G.mode && !p.out;
     p.crosshair.style.opacity = show ? '1' : '0';
@@ -1133,14 +1202,19 @@ window.addEventListener('keydown', e => {
   keys[k] = true;
   if (e.repeat) return;
 
-  if (k === 'escape' || k === 'p') { togglePause(); return; }
+  // Esc always pauses. P pauses only when P4 is not using it (mode < 4).
+  if (k === 'escape' || (k === 'p' && G.mode < 4)) { togglePause(); return; }
 
   if (G.state === 'playing') {
-    if (G.mode === 1 && k === ' ') fire(P[0]);     // P1 — Space only as a solo fallback (mouse is the primary fire)
-    if (G.mode >= 2 && (k === 'f'|| k === ' ')) fire(P[1]);     // P2 — WASD player fires with F or Space
-    if (G.mode >= 3 && (k === 'enter' || k === 'shift' || e.code === 'ControlRight')) fire(P[2]);    // P3 — Arrows player fires with Enter, Shift, or Ctrl
+    // P1 — Space fires only in solo (mouse is primary)
+    if (G.mode === 1 && k === ' ') fire(P[0]);
+    // P2 — Arrows player fires with Enter / Shift / RightCtrl (2P+)
+    if (G.mode >= 2 && (k === 'enter' || k === 'shift' || e.code === 'ControlRight' || k === 'control')) fire(P[1]);
+    // P3 — WASD player fires with F (3P+)
+    if (G.mode >= 3 && k === 'f') fire(P[2]);
+    // P4 — IJKL player fires with P (4P)
+    if (G.mode >= 4 && k === 'p') fire(P[3]);
   }
-
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
@@ -1156,8 +1230,33 @@ window.addEventListener('mousemove', e => {
 renderer.domElement.addEventListener('mousedown', e => {
   if (e.button !== 0) return;
   if (G.state !== 'playing') return;
-  fire(P[0]); // P1 always fires with the mouse
+  fire(P[0]);
 });
+
+/* ---- touch controls (mobile) ---- */
+renderer.domElement.addEventListener('touchstart', e => {
+  if (G.state !== 'playing') return;
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  if (!t) return;
+  audioInit();
+  const nx = (t.clientX / window.innerWidth) * 2 - 1;
+  const ny = -((t.clientY / window.innerHeight) * 2 - 1);
+  P[0].aim.set(nx, ny);
+  clampAim(P[0]);
+  fire(P[0]);
+}, { passive: false });
+
+renderer.domElement.addEventListener('touchmove', e => {
+  if (G.state !== 'playing' && G.state !== 'countdown') return;
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  if (!t) return;
+  const nx = (t.clientX / window.innerWidth) * 2 - 1;
+  const ny = -((t.clientY / window.innerHeight) * 2 - 1);
+  P[0].aim.set(nx, ny);
+  clampAim(P[0]);
+}, { passive: false });
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && G.state === 'playing') togglePause();
@@ -1182,9 +1281,7 @@ function applyAimDelta(p, ax, ay, dt) {
 }
 
 function updateAim(dt) {
-  // P1 — mouse (handled in mousemove). Optional solo WASD fallback below.
-
-  // Solo-only keyboard fallback so P1 works without a mouse
+  // P1 — solo keyboard fallback (WASD moves P1 only when alone)
   if (G.mode === 1) {
     let ax = 0, ay = 0;
     if (keys['w']) ay += 1;
@@ -1194,29 +1291,39 @@ function updateAim(dt) {
     if (ax || ay) applyAimDelta(P[0], ax, ay, dt);
   }
 
-  // P2 — WASD (all modes with 2+ players)
+  // P2 — ARROW KEYS (2P+)
   if (G.mode >= 2) {
-    let bx = 0, by = 0;
-    if (keys['w']) by += 1;
-    if (keys['s']) by -= 1;
-    if (keys['a']) bx -= 1;
-    if (keys['d']) bx += 1;
-    applyAimDelta(P[1], bx, by, dt);
+    let ax = 0, ay = 0;
+    if (keys['arrowup']) ay += 1;
+    if (keys['arrowdown']) ay -= 1;
+    if (keys['arrowleft']) ax -= 1;
+    if (keys['arrowright']) ax += 1;
+    applyAimDelta(P[1], ax, ay, dt);
   }
 
-  // P3 — Arrow keys (3P only)
+  // P3 — WASD (3P+)
   if (G.mode >= 3) {
-    let cx = 0, cy = 0;
-    if (keys['arrowup']) cy += 1;
-    if (keys['arrowdown']) cy -= 1;
-    if (keys['arrowleft']) cx -= 1;
-    if (keys['arrowright']) cx += 1;
-    applyAimDelta(P[2], cx, cy, dt);
+    let ax = 0, ay = 0;
+    if (keys['w']) ay += 1;
+    if (keys['s']) ay -= 1;
+    if (keys['a']) ax -= 1;
+    if (keys['d']) ax += 1;
+    applyAimDelta(P[2], ax, ay, dt);
+  }
+
+  // P4 — IJKL (4P)
+  if (G.mode >= 4) {
+    let ax = 0, ay = 0;
+    if (keys['i']) ay += 1;
+    if (keys['k']) ay -= 1;
+    if (keys['j']) ax -= 1;
+    if (keys['l']) ax += 1;
+    applyAimDelta(P[3], ax, ay, dt);
   }
 }
 
 /* =========================================================================
-   PLAYER TIMERS — each player has their own clock
+   PLAYER TIMERS
    ========================================================================= */
 function updatePlayers(dt, tickTimers) {
   let activeCount = 0;
@@ -1257,10 +1364,12 @@ function updatePlayers(dt, tickTimers) {
 /* =========================================================================
    FIRING
    ========================================================================= */
-function flashCrosshair(p) {
+function flashCrosshair(p, bullseye) {
   p.crosshair.classList.remove('hit');
+  p.crosshair.classList.remove('bullseye');
   void p.crosshair.offsetWidth;
-  p.crosshair.classList.add('hit');
+  if (bullseye) p.crosshair.classList.add('bullseye');
+  else p.crosshair.classList.add('hit');
 }
 
 function fire(p) {
@@ -1268,8 +1377,9 @@ function fire(p) {
   p.cooldown = 0.085;
   p.shots++;
 
+  audioInit();
   sndShoot();
-  flashCrosshair(p);
+  flashCrosshair(p, false);
 
   camera.updateMatrixWorld();
   raycaster.setFromCamera(p.aim, camera);
@@ -1304,57 +1414,80 @@ function fire(p) {
 }
 
 function handleHit(p, target, point, muzzle) {
-  // any orb hit counts as a successful shot for accuracy
   p.hits++;
 
-  tracer(muzzle, point, 0xbdf7ff);
+  // ---- BULLSEYE detection ----
+  // perpendicular distance from aim ray to orb centre vs inner-30%-area radius
+  const toCenter = target.group.position.clone().sub(raycaster.ray.origin);
+  const tDist = toCenter.dot(raycaster.ray.direction);
+  const closestOnRay = raycaster.ray.origin.clone()
+    .add(raycaster.ray.direction.clone().multiplyScalar(tDist));
+  const perpDist = closestOnRay.distanceTo(target.group.position);
+  const bullRadius = target.visRadius * Math.sqrt(0.2) * target.group.scale.x;
+  const isBull = perpDist < bullRadius;
+
+  if (isBull) {
+    p.bullseyes++;
+    flashCrosshair(p, true);
+    // extra visual pop
+    burst(point, 0xffe600, 14, 0.30);
+    sndBullseye();
+  }
+
+  tracer(muzzle, point, isBull ? 0xffe600 : 0xbdf7ff);
   burst(point, target.color);
   shockRing(point, target.color);
 
   switch (target.type) {
     case 'trap': {
-      p.score = Math.max(0, p.score - 150);
+      const penalty = isBull ? 600 : 150;
+      p.score = Math.max(0, p.score - penalty);
       p.combo = 0;
-      G.shake = 0.75;
-      popup(point, '−150', 0xff1744);
-      addFeed(p, 'TRAP −150');
+      G.shake = isBull ? 1.15 : 0.75;
+      popup(point, (isBull ? 'BULLSEYE −' : '−') + penalty, 0xff1744, isBull);
+      addFeed(p, (isBull ? 'BULLSEYE TRAP −' : 'TRAP −') + penalty);
       sndTrap();
       flashScreen('trapFlash');
       break;
     }
     case 'tax': {
-      const loss = Math.floor(p.score * 0.30);
+      const pct = isBull ? 0.50 : 0.30;
+      const dur = isBull ? 10 : 6;
+      const loss = Math.floor(p.score * pct);
       p.score = Math.max(0, p.score - loss);
       p.combo = 0;
-      p.taxTime = 7;                     // 7s of halved gains
-      popup(point, '−30%', 0xb300ff);
-      addFeed(p, 'TAX −' + loss + ' · 7s half');
+      p.taxTime = dur;
+      popup(point, isBull ? 'BULLSEYE −50%' : '−30%', 0xb300ff, isBull);
+      addFeed(p, (isBull ? 'BULLSEYE TAX −' : 'TAX −') + loss + ' · ' + dur + 's half');
       sndTax();
       flashScreen('taxFlash');
       break;
     }
     case 'time': {
-      p.timeLeft += 4;
+      const add = isBull ? 8 : 4;
+      p.timeLeft += add;
       p.combo++;
-      popup(point, '+4s', 0xffe600);
-      addFeed(p, 'TIME +4s');
+      popup(point, (isBull ? 'BULLSEYE +' : '+') + add + 's', 0xffe600, isBull);
+      addFeed(p, (isBull ? 'BULLSEYE TIME +' : 'TIME +') + add + 's');
       sndBonus();
       break;
     }
     case 'multi': {
-      p.multiplier = 3;
+      const m = isBull ? 6 : 3;
+      p.multiplier = m;
       p.multiTime = 5;
       p.combo++;
-      popup(point, '×3', 0x22ff44);
-      addFeed(p, 'MULTI ×3 · 5s');
+      popup(point, 'BULLSEYE ×' + m, 0x22ff44, isBull);
+      addFeed(p, (isBull ? 'BULLSEYE MULTI ×' : 'MULTI ×') + m + ' · 5s');
       sndBonus();
       break;
     }
     case 'freeze': {
-      p.freeze = 3;
+      const fz = isBull ? 6 : 3;
+      p.freeze = fz;
       p.combo++;
-      popup(point, 'FREEZE', 0x00ffd5);
-      addFeed(p, 'FREEZE 3s');
+      popup(point, isBull ? 'BULLSEYE FREEZE' : 'FREEZE', 0x00ffd5, isBull);
+      addFeed(p, (isBull ? 'BULLSEYE FREEZE ' : 'FREEZE ') + fz + 's');
       sndBonus();
       break;
     }
@@ -1364,12 +1497,13 @@ function handleHit(p, target, point, muzzle) {
 
       let pts = 100 + Math.min(p.combo, 20) * 10;
       pts *= p.multiplier;
-      if (p.taxTime > 0) pts *= 0.5;    // taxed gains are halved
+      if (p.taxTime > 0) pts *= 0.5;
+      if (isBull) pts *= 2;
       pts = Math.round(pts);
 
       p.score += pts;
-      popup(point, '+' + pts, target.color);
-      addFeed(p, '+' + pts + (p.taxTime > 0 ? ' (half)' : ''));
+      popup(point, (isBull ? 'BULLSEYE +' : '+') + pts, isBull ? 0xffe600 : target.color, isBull);
+      addFeed(p, (isBull ? 'BULLSEYE +' : '+') + pts + (p.taxTime > 0 ? ' (half)' : ''));
       sndHit();
     }
   }
@@ -1415,16 +1549,28 @@ function hideOverlay() { overlay.classList.add('hidden'); }
 
 function refreshMenuUI() {
   const ctrl = el('ctrlList');
-   if (G.mode === 3) {
+  if (isMobile) {
+    ctrl.innerHTML =
+      `<div><b>TAP</b> aim &amp; fire</div>
+       <div><b>DRAG</b> to reposition aim</div>
+       <div><b>PAUSE</b> top-right button</div>`;
+  } else if (G.mode === 4) {
     ctrl.innerHTML =
       `<div><b>P1 Mouse</b> + Click</div>
-       <div><b>P2 WASD</b> + F / Space</div>
-       <div><b>P3 Arrows</b> + Enter / Shift / Ctrl</div>
+       <div><b>P2 Arrows</b> + Enter / Shift / Ctrl</div>
+       <div><b>P3 WASD</b> + F</div>
+       <div><b>P4 IJKL</b> + P</div>
+       <div><b>Esc</b> pause</div>`;
+  } else if (G.mode === 3) {
+    ctrl.innerHTML =
+      `<div><b>P1 Mouse</b> + Click</div>
+       <div><b>P2 Arrows</b> + Enter / Shift / Ctrl</div>
+       <div><b>P3 WASD</b> + F</div>
        <div><b>Esc</b> pause</div>`;
   } else if (G.mode === 2) {
     ctrl.innerHTML =
       `<div><b>P1 Mouse</b> + Click</div>
-       <div><b>P2 WASD</b> + F / Space</div>
+       <div><b>P2 Arrows</b> + Enter / Shift / Ctrl</div>
        <div><b>Esc</b> pause</div>`;
   } else {
     ctrl.innerHTML =
@@ -1433,15 +1579,26 @@ function refreshMenuUI() {
        <div><b>Esc</b> pause</div>`;
   }
 
-  document.body.classList.remove('mode1','mode2','mode3');
+  document.body.classList.remove('mode1','mode2','mode3','mode4');
   document.body.classList.add('mode' + G.mode);
 
-  uiMode.textContent = G.mode === 1 ? 'SOLO' : G.mode === 2 ? 'DUEL' : 'TRI';
+  uiMode.textContent = ['SOLO','DUEL','TRI','QUAD'][G.mode - 1];
 
   const best = +(localStorage.getItem('neonAimBest' + G.mode) || 0);
   bestLine.textContent = best > 0 ? 'BEST ' + G.mode + 'P SCORE — ' + best : '';
 
+  updateStepperUI();
   rebuildColorUI();
+}
+
+function updateStepperUI() {
+  playersValue.textContent = G.mode;
+  playersMinus.disabled = (G.mode <= 1) || isMobile;
+  playersPlus.disabled = (G.mode >= 4) || isMobile;
+
+  durValue.textContent = G.duration + 's';
+  durMinus.disabled = durIndex <= 0;
+  durPlus.disabled = durIndex >= DURATIONS.length - 1;
 }
 
 /* ---------- color picker ---------- */
@@ -1477,25 +1634,48 @@ function rebuildColorUI() {
 function selectColor(playerIdx, colorIdx) {
   if (playerColorIdx[playerIdx] === colorIdx) return;
   const other = playerColorIdx.indexOf(colorIdx);
-  if (other >= 0) playerColorIdx[other] = playerColorIdx[playerIdx]; // swap
+  if (other >= 0) playerColorIdx[other] = playerColorIdx[playerIdx];
   playerColorIdx[playerIdx] = colorIdx;
   rebuildColorUI();
   applyPlayerColors();
 }
 
 function applyPlayerColors() {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     const css = PLAYER_PALETTE[playerColorIdx[i]].css;
     el('pcard' + (i + 1)).style.setProperty('--c', css);
     el('xh' + (i + 1)).style.setProperty('--c', css);
   }
 }
 
+/* ---------- player count / duration steppers ---------- */
+function setPlayerCount(n) {
+  n = Math.max(1, Math.min(4, n));
+  if (isMobile) n = 1;
+  G.mode = n;
+  refreshMenuUI();
+  updateHUD();
+}
+
+  const DURATIONS = [20, 30, 45, 60, 75, 90, 105, 120, 150, 180, 240, 300];
+  let durIndex = 3;
+
+function setDurationIndex(i) {
+  durIndex = Math.max(0, Math.min(DURATIONS.length - 1, i));
+  G.duration = DURATIONS[durIndex];
+  durValue.textContent = G.duration + 's';
+  if (G.state === 'menu') {
+    for (let j = 0; j < 4; j++) P[j].timeLeft = G.duration;
+    updateHUD();
+  }
+  updateStepperUI();
+}
+
 /* ---------- game start / reset ---------- */
 function resetPlayer(p) {
-  p.aim.set(p.id === 0 ? 0 : p.id === 1 ? -0.35 : 0.35, p.id === 2 ? -0.15 : 0.15);
+  p.aim.set(STARTS[p.id][0], STARTS[p.id][1]);
   p.score = 0; p.combo = 0; p.bestCombo = 0;
-  p.hits = 0; p.shots = 0;
+  p.hits = 0; p.shots = 0; p.bullseyes = 0;
   p.multiplier = 1; p.multiTime = 0;
   p.taxTime = 0; p.freeze = 0;
   p.timeLeft = G.duration;
@@ -1509,14 +1689,13 @@ function startGame() {
   audioInit();
   sndStart();
 
-  G.duration = +durSlider.value;
   G.elapsed = 0;
   G.countdown = 3.0;
   G.goFlash = 0;
   G.shake = 0;
   lastCountdownNumber = -1;
 
-  for (let i = 0; i < 3; i++) resetPlayer(P[i]);
+  for (let i = 0; i < 4; i++) resetPlayer(P[i]);
 
   clearTargets();
   for (let i = 0; i < 4; i++) spawnTarget('target');
@@ -1540,6 +1719,7 @@ function togglePause() {
     pauseBtn.textContent = 'RESUME';
     showView('pause');
   } else if (G.state === 'paused') {
+    audioInit();
     G.state = 'playing';
     pauseBtn.textContent = 'PAUSE';
     hideOverlay();
@@ -1555,12 +1735,13 @@ function endGame() {
 
   let title = 'ROUND COMPLETE';
   if (G.mode > 1) {
-    let best = -1, tie = false;
+    let best = -1;
+    let winners = [];
     for (let i = 0; i < G.mode; i++) {
-      if (P[i].score > best) { best = P[i].score; tie = false; }
-      else if (P[i].score === best) tie = true;
+      if (P[i].score > best) { best = P[i].score; winners = [P[i]]; }
+      else if (P[i].score === best) winners.push(P[i]);
     }
-    title = tie ? 'DRAW' : P.find(p => p.score === best).short + ' WINS';
+    title = winners.length > 1 ? 'DRAW' : winners[0].short + ' WINS';
   }
   el('resultTitle').textContent = title;
 
@@ -1577,6 +1758,7 @@ function endGame() {
        <div class="rrow"><span>SCORE</span><b>${p.score}</b></div>
        <div class="rrow"><span>ACCURACY</span><b>${accuracy(p).toFixed(0)}%</b></div>
        <div class="rrow"><span>BEST COMBO</span><b>${p.bestCombo}</b></div>
+       <div class="rrow"><span>BULLSEYES</span><b>${p.bullseyes}</b></div>
        <div class="rrow"><span>TIME LEFT</span><b>${p.out ? 0 : Math.ceil(p.timeLeft)}s</b></div>`;
     grid.appendChild(d);
 
@@ -1597,9 +1779,7 @@ function quitToMenu() {
   clearTargets();
   for (let i = 0; i < 4; i++) spawnTarget('target');
 
-  for (let i = 0; i < 3; i++) resetPlayer(P[i]);
-  G.duration = +durSlider.value;
-  for (let i = 0; i < 3; i++) P[i].timeLeft = G.duration;
+  for (let i = 0; i < 4; i++) resetPlayer(P[i]);
 
   updateHUD();
   refreshMenuUI();
@@ -1630,24 +1810,10 @@ buildWiki();
 /* =========================================================================
    UI BINDINGS
    ========================================================================= */
-document.querySelectorAll('.modeBtn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    btn.blur();
-    G.mode = +btn.dataset.mode;
-    document.querySelectorAll('.modeBtn').forEach(b => b.classList.toggle('active', b === btn));
-    refreshMenuUI();
-    updateHUD();
-  });
-});
-
-durSlider.addEventListener('input', () => {
-  durValue.textContent = durSlider.value + 's';
-  if (G.state === 'menu') {
-    G.duration = +durSlider.value;
-    for (let i = 0; i < 3; i++) P[i].timeLeft = G.duration;
-    updateHUD();
-  }
-});
+playersMinus.addEventListener('click', () => { playersMinus.blur(); setPlayerCount(G.mode - 1); });
+playersPlus.addEventListener('click', () => { playersPlus.blur(); setPlayerCount(G.mode + 1); });
+durMinus.addEventListener('click', () => { durMinus.blur(); setDurationIndex(durIndex - 1); });
+durPlus.addEventListener('click', () => { durPlus.blur(); setDurationIndex(durIndex + 1); });
 
 el('startBtn').addEventListener('click', e => { e.currentTarget.blur(); startGame(); });
 el('resumeBtn').addEventListener('click', e => { e.currentTarget.blur(); togglePause(); });
@@ -1748,7 +1914,6 @@ function animate() {
       updatePlayers(dt, true);
       updateHUD();
 
-      // hard safety cap: never run more than 4× the round length
       if (G.state === 'playing' && G.elapsed > G.duration * 4) endGame();
       break;
     }
@@ -1781,9 +1946,13 @@ function animate() {
    ========================================================================= */
 window.addEventListener('resize', syncSize);
 
+// mobile: force 1P
+if (isMobile) G.mode = 1;
+
 setMuted(muted);
 syncSize();
 applyPlayerColors();
+setDurationIndex(3);   // 60s
 refreshMenuUI();
 for (let i = 0; i < 4; i++) spawnTarget('target');
 updateHUD();
