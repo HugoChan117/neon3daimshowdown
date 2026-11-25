@@ -419,7 +419,7 @@
       </div>
       <div class="sliderRow">
         <label>ROUND LENGTH</label>
-        <input id="durSlider" type="range" min="30" max="120" step="5" value="60">
+        <input id="durSlider" type="range" min="20" max="180" step="5" value="60">
         <span id="durValue">60s</span>
       </div>
       <div id="colorSection">
@@ -1138,7 +1138,7 @@ window.addEventListener('keydown', e => {
   if (G.state === 'playing') {
     if (G.mode === 1 && k === ' ') fire(P[0]);     // P1 — Space only as a solo fallback (mouse is the primary fire)
     if (G.mode >= 2 && (k === 'q' || k === 'e' || k === ' ')) fire(P[1]);     // P2 — WASD player fires with Q, E, or Space
-    if (G.mode >= 3 && (k === 'enter' || e.code === 'ShiftRight' || e.code === 'ControlRight')) fire(P[2]);    // P3 — Arrows player fires with Enter, Shift, or Ctrl
+    if (G.mode >= 3 && (k === 'enter' || k === 'shift' || e.code === 'ControlRight')) fire(P[2]);    // P3 — Arrows player fires with Enter, Shift, or Ctrl
   }
 
 });
