@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEON AIM SHOWDOWN — 3P Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --p1:#2f7dff;
+    --p2:#ff2b2b;
+    --p3:#3cff3c;
+    --violet:#8b5cff;
+    --gold:#ffe600;
+    --lime:#22ff44;
+    --red:#ff1744;
+    --tax:#b300ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    overflow:hidden;background:#05010d;color:#eafcff;
+    font-family:'Orbitron','Segoe UI',system-ui,sans-serif;
+    user-select:none;-webkit-user-select:none;cursor:none;
+  }
+  canvas{display:block;will-change:transform;}
+
+  /* ---------------- HUD ---------------- */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10;}
+
+  #hudTop{
+    position:absolute;top:0;left:0;right:0;
+    display:grid;grid-template-columns:1fr auto 1fr;
+    align-items:start;gap:12px;padding:14px 18px 0;
+  }
+
+  /* ---- player cards ---- */
+  #playerCards{display:flex;flex-direction:column;gap:8px;align-items:flex-start;}
+  .pcard{
+    --c:var(--p1);
+    min-width:230px;padding:8px 14px;border-left:2px solid var(--c);
+    background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.15));
+    border-radius:2px;
+    transition:box-shadow .2s,opacity .2s;
+    font-variant-numeric:tabular-nums;
+  }
+  .pcard.taxed{box-shadow:inset 0 0 26px rgba(179,0,255,.35),0 0 18px rgba(179,0,255,.25);}
+  .pcard.out{opacity:.42;filter:grayscale(.65);}
+  body.mode1 .pcard.p2,body.mode1 .pcard.p3,
+  body.mode2 .pcard.p3{display:none;}
+
+  .pc-top{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .pc-name{
+    font-size:9px;font-weight:900;letter-spacing:.3em;
+    color:var(--c);text-shadow:0 0 10px var(--c);
+  }
+  .pc-timer{
+    font-size:29px;font-weight:900;line-height:1;color:#fff;
+    text-shadow:0 0 10px var(--c),0 0 26px var(--c);
+    transition:color .2s;
+  }
+  .pc-timer.warn{color:#ff5a7a;text-shadow:0 0 10px #ff1744,0 0 26px #ff1744;animation:tpulse .6s ease-in-out infinite;}
+  .pc-timer.zero{color:#ff1744;text-shadow:0 0 10px #ff1744,0 0 26px #ff1744;}
+  @keyframes tpulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+
+  .pc-timerbar{
+    height:3px;border-radius:2px;margin:6px 0 4px;
+    background:rgba(255,255,255,.08);overflow:hidden;
+  }
+  .pc-timerfill{
+    height:100%;width:100%;background:var(--c);
+    box-shadow:0 0 8px var(--c);transition:width .1s linear;
+  }
+
+  .pc-sub{display:flex;gap:12px;font-size:12px;letter-spacing:.16em;color:#7d7bff;font-weight:700;}
+  .pc-sub b{color:#dff9ff;font-size:14px;margin-left:3px;letter-spacing:.04em;}
+  .pc-chips{display:flex;gap:5px;margin-top:5px;min-height:14px;}
+
+  .chip{
+    font-size:8px;font-weight:900;letter-spacing:.14em;
+    padding:2px 6px;border-radius:2px;opacity:0;transform:scale(.75);
+    transition:opacity .15s,transform .15s;
+  }
+  .chip.on{opacity:1;transform:scale(1);}
+  .chip.multi{background:rgba(34,255,68,.16);color:var(--lime);border:1px solid var(--lime);box-shadow:0 0 12px rgba(34,255,68,.45);}
+  .chip.tax{background:rgba(179,0,255,.20);color:#e18bff;border:1px solid var(--tax);box-shadow:0 0 12px rgba(179,0,255,.45);}
+  .chip.freeze{background:rgba(0,255,213,.16);color:#00ffd5;border:1px solid #00ffd5;box-shadow:0 0 12px rgba(0,255,213,.45);}
+  .chip.out{background:rgba(255,23,68,.18);color:#ff5a7a;border:1px solid #ff1744;box-shadow:0 0 12px rgba(255,23,68,.45);}
+
+  /* ---- center mode label ---- */
+  .centerblock{text-align:center;padding-top:4px;min-width:78px;}
+  .centerblock .label{display:block;font-size:8px;font-weight:700;letter-spacing:.3em;color:#7d7bff;margin-bottom:3px;}
+  .centerblock .value{
+    display:block;font-size:clamp(16px,2.4vw,22px);font-weight:900;line-height:1;
+    color:#fff;text-shadow:0 0 10px var(--violet),0 0 24px var(--violet);
+    letter-spacing:.06em;
+  }
+
+  /* ---- system buttons ---- */
+  #sysBtns{display:flex;gap:8px;justify-content:flex-end;pointer-events:auto;}
+  .sysBtn{
+    pointer-events:auto;cursor:pointer;
+    font-family:inherit;font-size:9px;font-weight:900;letter-spacing:.2em;
+    color:#9fd8ff;background:rgba(0,240,255,.08);
+    border:1px solid rgba(0,240,255,.3);border-radius:3px;padding:9px 13px;
+    transition:all .15s;white-space:nowrap;
+  }
+  .sysBtn:hover{background:rgba(0,240,255,.2);color:#fff;box-shadow:0 0 16px rgba(0,240,255,.5);}
+  .sysBtn.off{color:#ff8098;border-color:rgba(255,60,90,.45);background:rgba(255,40,80,.08);}
+
+  /* ---- feed ---- */
+  #feed{position:absolute;left:18px;bottom:18px;display:flex;flex-direction:column-reverse;gap:4px;}
+  .feedItem{
+    font-size:10px;font-weight:700;letter-spacing:.13em;color:#fff;
+    opacity:0;text-shadow:0 0 10px currentColor;
+    animation:feedin .2s forwards,feedout .5s 2.7s forwards;
+  }
+  @keyframes feedin{to{opacity:1;}}
+  @keyframes feedout{to{opacity:0;}}
+
+  /* ---------------- Crosshairs ---------------- */
+  .xhair{
+    --c:var(--p1);
+    position:absolute;left:0;top:0;width:46px;height:46px;
+    pointer-events:none;opacity:0;transition:opacity .2s;will-change:transform;
+  }
+  .xhair > *{position:absolute;}
+  .x-ring{
+    inset:0;border-radius:50%;border:2px solid var(--c);
+    box-shadow:0 0 8px var(--c),0 0 20px var(--c),inset 0 0 8px rgba(255,255,255,.35);
+    opacity:.9;
+  }
+  .x-dot{width:4px;height:4px;left:50%;top:50%;margin:-2px 0 0 -2px;border-radius:50%;background:#fff;box-shadow:0 0 8px var(--c),0 0 16px var(--c);}
+  .x-t{width:2px;height:8px;left:50%;margin-left:-1px;background:var(--c);box-shadow:0 0 6px var(--c);}
+  .x-t.t{top:-7px;} .x-t.b{bottom:-7px;}
+  .x-h{height:2px;width:8px;top:50%;margin-top:-1px;background:var(--c);box-shadow:0 0 6px var(--c);}
+  .x-h.l{left:-7px;} .x-h.r{right:-7px;}
+  .x-label{
+    position:absolute;left:50%;top:-20px;transform:translateX(-50%);
+    font-size:9px;font-weight:900;letter-spacing:.22em;color:var(--c);
+    text-shadow:0 0 8px var(--c),0 0 16px var(--c);white-space:nowrap;
+  }
+  .xhair.hit .x-ring{animation:hitpop .22s ease-out;}
+  .xhair.hit .x-dot{animation:dotpop .22s ease-out;}
+  @keyframes hitpop{0%{transform:scale(1.55);border-color:#fff;box-shadow:0 0 22px #fff,0 0 44px var(--c);}100%{transform:scale(1);}}
+  @keyframes dotpop{0%{transform:scale(2.6);background:#fff;}100%{transform:scale(1);}}
+
+  /* ---------------- Countdown & flashes ---------------- */
+  #countdown{
+    position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.6);
+    font-size:clamp(64px,14vw,150px);font-weight:900;letter-spacing:.06em;
+    color:#fff;opacity:0;pointer-events:none;
+    text-shadow:0 0 18px var(--p1),0 0 60px var(--violet),0 0 120px var(--p2);
+    transition:opacity .18s,transform .18s;
+  }
+  #countdown.on{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+  #trapFlash{position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(ellipse at center,rgba(255,0,60,0) 35%,rgba(255,0,60,.55) 100%);}
+  #trapFlash.on{animation:trapflash .45s ease-out;}
+  @keyframes trapflash{0%{opacity:1;}100%{opacity:0;}}
+
+  #taxFlash{position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(ellipse at center,rgba(179,0,255,0) 35%,rgba(179,0,255,.50) 100%);}
+  #taxFlash.on{animation:taxflash .5s ease-out;}
+  @keyframes taxflash{0%{opacity:1;}100%{opacity:0;}}
+
+  /* ---------------- Overlay ---------------- */
+  #overlay{
+    position:fixed;inset:0;z-index:20;cursor:default;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 42%,rgba(30,0,60,.70),rgba(5,1,13,.96) 72%);
+    backdrop-filter:blur(4px);transition:opacity .25s ease;padding:18px;
+  }
+  #overlay.hidden{opacity:0;pointer-events:none;}
+
+  .panel{
+    text-align:center;width:min(96vw,860px);
+    padding:clamp(20px,3.5vw,40px) clamp(20px,5vw,52px);
+    border:1px solid rgba(0,240,255,.22);border-radius:8px;
+    background:linear-gradient(160deg,rgba(0,40,60,.35),rgba(40,0,70,.35));
+    box-shadow:0 0 70px rgba(0,240,255,.12),inset 0 0 70px rgba(139,92,255,.08);
+    max-height:94vh;overflow:auto;
+  }
+  .panel h1{
+    font-size:clamp(24px,4.6vw,44px);font-weight:900;letter-spacing:.06em;line-height:1.1;color:#fff;
+    text-shadow:0 0 10px var(--p1),0 0 34px var(--p1),0 0 80px var(--violet);
+  }
+  .panel h1 span{color:var(--p2);text-shadow:0 0 10px var(--p2),0 0 34px var(--p2);}
+
+  .hidden{display:none !important;}
+
+  .row{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap;}
+
+  .modeBtn{
+    font-family:inherit;font-size:12px;font-weight:900;letter-spacing:.2em;
+    padding:12px 26px;border-radius:3px;cursor:pointer;
+    background:rgba(0,240,255,.06);color:#8fd8ff;
+    border:1px solid rgba(0,240,255,.35);transition:all .15s;
+  }
+  .modeBtn:hover{background:rgba(0,240,255,.16);color:#fff;}
+  .modeBtn.active{
+    background:linear-gradient(120deg,rgba(0,240,255,.9),rgba(139,92,255,.9));
+    color:#04121a;border-color:transparent;
+    box-shadow:0 0 22px rgba(0,240,255,.6),0 0 48px rgba(139,92,255,.4);
+  }
+
+  .sliderRow{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:22px;flex-wrap:wrap;}
+  .sliderRow label{font-size:10px;letter-spacing:.26em;color:#7d7bff;font-weight:700;}
+  #durSlider{
+    -webkit-appearance:none;appearance:none;width:min(48vw,260px);height:4px;border-radius:2px;outline:none;cursor:pointer;
+    background:linear-gradient(90deg,var(--p1),var(--violet),var(--p2));
+    box-shadow:0 0 12px rgba(0,240,255,.5);
+  }
+  #durSlider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--p1),0 0 22px var(--p1);cursor:pointer;}
+  #durSlider::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--p1),0 0 22px var(--p1);cursor:pointer;}
+  #durValue{font-size:14px;font-weight:900;color:#fff;min-width:56px;text-shadow:0 0 12px var(--p1);}
+
+  /* ---- color picker ---- */
+  #colorSection{margin-top:22px;}
+  .colorLabel{font-size:9px;letter-spacing:.26em;color:#7d7bff;font-weight:700;margin-bottom:10px;}
+  #colorRows{display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .colorRow{display:flex;align-items:center;gap:8px;}
+  .colorName{
+    font-size:11px;font-weight:900;letter-spacing:.2em;
+    min-width:30px;text-align:left;
+  }
+  .swatch{
+    width:22px;height:22px;border-radius:50%;
+    border:2px solid transparent;cursor:pointer;padding:0;
+    transition:transform .12s,border-color .12s,opacity .12s;
+  }
+  .swatch:hover{transform:scale(1.16);}
+  .swatch.active{border-color:#fff;transform:scale(1.16);}
+  .swatch.taken{opacity:.32;}
+
+  .controls{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:8px 22px;
+    margin-top:22px;font-size:10px;letter-spacing:.14em;color:#8f9bd8;
+  }
+  .controls b{color:var(--p1);text-shadow:0 0 10px var(--p1);}
+
+  .cta{
+    margin-top:22px;font-family:inherit;font-size:clamp(12px,1.7vw,15px);font-weight:900;letter-spacing:.28em;
+    color:#04121a;padding:15px 48px;border:none;border-radius:3px;cursor:pointer;
+    background:linear-gradient(120deg,var(--p1),#7be0ff 40%,var(--p2));
+    box-shadow:0 0 22px rgba(0,240,255,.55),0 0 60px rgba(255,47,208,.35);
+    transition:transform .12s,box-shadow .12s;
+  }
+  .cta:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 0 34px rgba(0,240,255,.85),0 0 80px rgba(255,47,208,.55);}
+  .cta:active{transform:translateY(0) scale(.99);}
+
+  .ghost{
+    font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.22em;
+    color:#8fa4ff;background:transparent;border:1px solid rgba(143,164,255,.32);
+    padding:11px 26px;border-radius:3px;cursor:pointer;transition:all .15s;
+  }
+  .ghost:hover{color:#fff;border-color:var(--p1);box-shadow:0 0 18px rgba(0,240,255,.4);}
+
+  .btnRow{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+
+  .sub{margin-top:14px;font-size:clamp(11px,1.5vw,13px);line-height:1.7;letter-spacing:.08em;color:#a6b4ff;}
+  .bestLine{margin-top:16px;font-size:10px;letter-spacing:.24em;color:#5d63a8;}
+
+  /* ---- results ---- */
+  #resultTitle{font-size:clamp(22px,4vw,40px);font-weight:900;letter-spacing:.08em;color:#fff;text-shadow:0 0 12px var(--p1),0 0 44px var(--violet);}
+  .results{display:flex;gap:clamp(16px,4vw,52px);justify-content:center;margin-top:24px;flex-wrap:wrap;}
+  .rcol{min-width:150px;}
+  .rname{font-size:10px;font-weight:900;letter-spacing:.28em;margin-bottom:12px;}
+  .rrow{display:flex;justify-content:space-between;gap:18px;font-size:10px;letter-spacing:.16em;color:#7d7bff;padding:5px 0;}
+  .rrow b{font-size:15px;color:#fff;letter-spacing:.04em;}
+
+  /* ---- wiki ---- */
+  .wikiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:22px;text-align:left;}
+  .wikiCard{
+    padding:16px 14px;border-radius:5px;
+    background:linear-gradient(160deg,rgba(0,30,50,.55),rgba(25,0,50,.55));
+    border:1px solid rgba(0,240,255,.16);
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .wikiCard:hover{border-color:rgba(0,240,255,.45);box-shadow:0 0 22px rgba(0,240,255,.18);}
+  .wikiOrb{
+    width:34px;height:34px;border-radius:50%;margin:0 auto 10px;
+    background:radial-gradient(circle at 35% 30%,#fff,var(--o) 45%,rgba(0,0,0,.45) 100%);
+    box-shadow:0 0 14px var(--o),0 0 30px var(--o);
+  }
+  .wikiName{font-size:11px;font-weight:900;letter-spacing:.16em;color:#fff;text-align:center;}
+  .wikiType{
+    display:block;margin:6px auto 8px;width:max-content;
+    font-size:8px;font-weight:900;letter-spacing:.22em;padding:2px 8px;border-radius:2px;
+  }
+  .wikiType.reward{color:var(--lime);border:1px solid var(--lime);background:rgba(34,255,68,.12);}
+  .wikiType.risk{color:#ff7a55;border:1px solid var(--red);background:rgba(255,23,68,.14);}
+  .wikiDesc{font-size:10px;line-height:1.7;letter-spacing:.06em;color:#9fb0e8;text-align:center;}
+  .wikiNote{
+    margin-top:22px;font-size:10px;letter-spacing:.16em;color:#7d7bff;
+    border-top:1px solid rgba(0,240,255,.15);padding-top:16px;line-height:1.8;
+  }
+
+  /* ---- how to play ---- */
+  .howtoContent{text-align:left;margin-top:20px;}
+  .howtoSection{margin-bottom:16px;}
+  .howtoSection h3{
+    font-size:10px;letter-spacing:.26em;color:var(--p1);
+    font-weight:900;margin-bottom:7px;text-shadow:0 0 10px var(--p1);
+  }
+  .howtoSection p,.howtoSection li{
+    font-size:11px;line-height:1.8;letter-spacing:.05em;color:#b0bdf0;
+  }
+  .howtoSection ul{list-style:none;padding:0;}
+  .howtoSection li{padding:2px 0 2px 15px;position:relative;}
+  .howtoSection li::before{content:'▸';position:absolute;left:0;color:var(--p2);}
+  .howtoSection b{color:#fff;}
+  .howtoSection .k{color:var(--p1);font-weight:700;}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="hudTop">
+    <div id="playerCards">
+      <div class="pcard p1" id="pcard1">
+        <div class="pc-top"><span class="pc-name">P1</span><span class="pc-timer" id="p1timer">60</span></div>
+        <div class="pc-timerbar"><div class="pc-timerfill" id="p1tbar"></div></div>
+        <div class="pc-sub"><span>SCORE<b id="p1score">0</b></span><span>COMBO<b id="p1combo">0</b></span><span>ACC<b id="p1acc">100%</b></span></div>
+        <div class="pc-chips">
+          <span class="chip multi" id="p1multi">×3</span>
+          <span class="chip tax" id="p1tax">TAXED</span>
+          <span class="chip freeze" id="p1freeze">FROZEN</span>
+          <span class="chip out" id="p1out">OUT</span>
+        </div>
+      </div>
+      <div class="pcard p2" id="pcard2">
+        <div class="pc-top"><span class="pc-name">P2</span><span class="pc-timer" id="p2timer">60</span></div>
+        <div class="pc-timerbar"><div class="pc-timerfill" id="p2tbar"></div></div>
+        <div class="pc-sub"><span>SCORE<b id="p2score">0</b></span><span>COMBO<b id="p2combo">0</b></span><span>ACC<b id="p2acc">100%</b></span></div>
+        <div class="pc-chips">
+          <span class="chip multi" id="p2multi">×3</span>
+          <span class="chip tax" id="p2tax">TAXED</span>
+          <span class="chip freeze" id="p2freeze">FROZEN</span>
+          <span class="chip out" id="p2out">OUT</span>
+        </div>
+      </div>
+      <div class="pcard p3" id="pcard3">
+        <div class="pc-top"><span class="pc-name">P3</span><span class="pc-timer" id="p3timer">60</span></div>
+        <div class="pc-timerbar"><div class="pc-timerfill" id="p3tbar"></div></div>
+        <div class="pc-sub"><span>SCORE<b id="p3score">0</b></span><span>COMBO<b id="p3combo">0</b></span><span>ACC<b id="p3acc">100%</b></span></div>
+        <div class="pc-chips">
+          <span class="chip multi" id="p3multi">×3</span>
+          <span class="chip tax" id="p3tax">TAXED</span>
+          <span class="chip freeze" id="p3freeze">FROZEN</span>
+          <span class="chip out" id="p3out">OUT</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="centerblock">
+      <span class="label">MODE</span>
+      <span class="value" id="uiMode">SOLO</span>
+    </div>
+
+    <div id="sysBtns">
+      <button class="sysBtn" id="pauseBtn" title="Pause / Resume (Esc)">PAUSE</button>
+      <button class="sysBtn" id="muteBtn" title="Toggle sound">SOUND: ON</button>
+    </div>
+  </div>
+
+  <div id="feed"></div>
+
+  <div class="xhair p1" id="xh1">
+    <span class="x-label">P1</span>
+    <div class="x-ring"></div><div class="x-dot"></div>
+    <div class="x-t t"></div><div class="x-t b"></div>
+    <div class="x-h l"></div><div class="x-h r"></div>
+  </div>
+  <div class="xhair p2" id="xh2">
+    <span class="x-label">P2</span>
+    <div class="x-ring"></div><div class="x-dot"></div>
+    <div class="x-t t"></div><div class="x-t b"></div>
+    <div class="x-h l"></div><div class="x-h r"></div>
+  </div>
+  <div class="xhair p3" id="xh3">
+    <span class="x-label">P3</span>
+    <div class="x-ring"></div><div class="x-dot"></div>
+    <div class="x-t t"></div><div class="x-t b"></div>
+    <div class="x-h l"></div><div class="x-h r"></div>
+  </div>
+
+  <div id="countdown">3</div>
+  <div id="trapFlash"></div>
+  <div id="taxFlash"></div>
+</div>
+
+<div id="overlay">
+  <div class="panel">
+
+    <!-- ============ MENU ============ -->
+    <div id="menuView">
+      <h1>NEON<span>AIM</span>SHOWDOWN</h1>
+      <div class="row">
+        <button class="modeBtn active" data-mode="1">1 PLAYER</button>
+        <button class="modeBtn" data-mode="2">2 PLAYERS</button>
+        <button class="modeBtn" data-mode="3">3 PLAYERS</button>
+      </div>
+      <div class="sliderRow">
+        <label>ROUND LENGTH</label>
+        <input id="durSlider" type="range" min="30" max="120" step="5" value="60">
+        <span id="durValue">60s</span>
+      </div>
+      <div id="colorSection">
+        <div class="colorLabel">AIM COLORS — EACH PLAYER UNIQUE</div>
+        <div id="colorRows"></div>
+      </div>
+      <div class="controls" id="ctrlList"></div>
+      <button id="startBtn" class="cta">START</button>
+      <div class="btnRow">
+        <button id="howtoBtn" class="ghost">HOW TO PLAY</button>
+        <button id="wikiBtn" class="ghost">ORB WIKI</button>
+      </div>
+      <div class="bestLine" id="bestLine"></div>
+    </div>
+
+    <!-- ============ PAUSE ============ -->
+    <div id="pauseView" class="hidden">
+      <p class="sub">PAUSED — the arena waits.</p>
+      <button id="resumeBtn" class="cta">RESUME</button>
+      <div class="btnRow"><button id="quitBtn" class="ghost">QUIT TO MENU</button></div>
+    </div>
+
+    <!-- ============ RESULTS ============ -->
+    <div id="resultView" class="hidden">
+      <h2 id="resultTitle">ROUND COMPLETE</h2>
+      <div class="results" id="resultGrid"></div>
+      <button id="againBtn" class="cta">PLAY AGAIN</button>
+      <div class="btnRow"><button id="menuBtn" class="ghost">MAIN MENU</button></div>
+    </div>
+
+    <!-- ============ ORB WIKI ============ -->
+    <div id="wikiView" class="hidden">
+      <h1 style="font-size:clamp(20px,3.4vw,34px)">ORB <span>WIKI</span></h1>
+      <div class="wikiGrid" id="wikiGrid"></div>
+      <div class="wikiNote">
+        85% of spawns are normal blue targets · 10% are risk orbs (trap / tax, split 2:1) · 5% are rewards (time / multi / freeze).<br>
+        Every orb has a unique color. Combo raises target value · missing or hitting a risk orb resets your combo.
+      </div>
+      <div><button id="wikiBackBtn" class="cta" style="margin-top:22px">BACK</button></div>
+    </div>
+
+    <!-- ============ HOW TO PLAY ============ -->
+    <div id="howtoView" class="hidden">
+      <h1 style="font-size:clamp(20px,3.4vw,34px)">HOW TO <span>PLAY</span></h1>
+      <div class="howtoContent">
+        <div class="howtoSection">
+          <h3>OBJECTIVE</h3>
+          <p>Shoot neon orbs to score points before your personal clock runs out. The highest score when the round ends wins.</p>
+        </div>
+        <div class="howtoSection">
+          <h3>CONTROLS</h3>
+          <ul>
+            <li><b>1P</b> — Mouse / WASD / Arrows aim · Click / Space fire</li>
+            <li><b>2P</b> — P1: WASD + Space/F · P2: Arrows + Enter</li>
+            <li><b>3P</b> — P1: WASD + Space/F · P2: Arrows + Enter · P3: Mouse + Click</li>
+            <li><b>Esc / P</b> — Pause · <b>Sound button</b> — Mute</li>
+          </ul>
+        </div>
+        <div class="howtoSection">
+          <h3>SCORING</h3>
+          <ul>
+            <li>Blue target: <b>100 pts</b> + 10 per combo (max combo ×20)</li>
+            <li>Combo resets on a miss or on a risk orb</li>
+            <li>Multiplier orb: <b>×3</b> points for 5s</li>
+          </ul>
+        </div>
+        <div class="howtoSection">
+          <h3>YOUR TIMER</h3>
+          <ul>
+            <li>Each player has an <b>individual clock</b>. When it hits 0 you are out.</li>
+            <li>Time shards add <b>+4s</b> to your clock.</li>
+            <li>Freeze orb pauses your clock for 3s.</li>
+            <li>The round ends when all players are out.</li>
+          </ul>
+        </div>
+        <div class="howtoSection">
+          <h3>RISK ORBS</h3>
+          <ul>
+            <li><span class="k">Red Trap</span> — −150 pts and your combo resets.</li>
+            <li><span class="k">Purple Tax</span> — instantly lose 30% of your score · for 7s all points earned are halved.</li>
+          </ul>
+        </div>
+        <div class="howtoSection">
+          <h3>REWARD ORBS</h3>
+          <ul>
+            <li><span class="k">Yellow Time</span> — +4s on your clock.</li>
+            <li><span class="k">Green Multi</span> — ×3 points for 5s.</li>
+            <li><span class="k">Turquoise Freeze</span> — your clock pauses for 3s.</li>
+          </ul>
+        </div>
+      </div>
+      <div><button id="howtoBackBtn" class="cta" style="margin-top:22px">BACK</button></div>
+    </div>
+
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+/* =========================================================================
+   RENDERER / SCENE / FIXED CAMERA
+   ========================================================================= */
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05010d);
+scene.fog = new THREE.FogExp2(0x05010d, 0.011);
+
+const CAM_POS  = new THREE.Vector3(0, 5.6, 18);
+const CAM_LOOK = new THREE.Vector3(0, 3.2, -6);
+
+const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 400);
+camera.position.copy(CAM_POS);
+camera.lookAt(CAM_LOOK);
+camera.updateMatrixWorld(true);
+
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 1.15, 0.62, 0.15);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+/* =========================================================================
+   WORLD
+   ========================================================================= */
+const grid = new THREE.GridHelper(240, 120, 0x00e5ff, 0x3a1070);
+grid.material.transparent = true;
+grid.material.opacity = 0.33;
+grid.material.depthWrite = false;
+grid.position.z = -18;
+scene.add(grid);
+
+for (let i = 0; i < 3; i++) {
+  const r = 8 + i * 7;
+  const geo = new THREE.TorusGeometry(r, 0.05, 6, 90);
+  const mat = new THREE.MeshBasicMaterial({
+    color: [0x00f0ff, 0xff2fd0, 0x8b5cff][i],
+    transparent: true, opacity: 0.30,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const ring = new THREE.Mesh(geo, mat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.02;
+  scene.add(ring);
+}
+
+{ // skyline pillars
+  const geo = new THREE.BoxGeometry(0.16, 1, 0.16);
+  for (let i = 0; i < 24; i++) {
+    const h = 6 + Math.random() * 16;
+    const mat = new THREE.MeshBasicMaterial({
+      color: i % 2 ? 0x00e5ff : 0xff2fd0,
+      transparent: true, opacity: 0.20,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.scale.y = h;
+    m.position.set(-42 + i * 3.7, h / 2, -34 - Math.random() * 8);
+    scene.add(m);
+  }
+}
+
+const decor = [];
+{
+  const colors = [0x00e5ff, 0xff2fd0, 0x8b5cff, 0x00ff9d];
+  for (let i = 0; i < 9; i++) {
+    const r = 2 + Math.random() * 6;
+    const geo = new THREE.TorusGeometry(r, 0.05, 6, 64);
+    const mat = new THREE.MeshBasicMaterial({
+      color: colors[i % colors.length], transparent: true,
+      opacity: 0.18 + Math.random() * 0.2, depthWrite: false
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(THREE.MathUtils.randFloatSpread(70), 3 + Math.random() * 16, -20 - Math.random() * 40);
+    m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    scene.add(m);
+    decor.push({
+      mesh: m,
+      spin: new THREE.Vector3(
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.3
+      )
+    });
+  }
+}
+
+{ // stars
+  const N = 1200;
+  const pos = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    pos[i*3+0] = THREE.MathUtils.randFloatSpread(300);
+    pos[i*3+1] = Math.random() * 110 - 10;
+    pos[i*3+2] = -30 - Math.random() * 200;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+    color: 0x4a6bff, size: 0.5, transparent: true, opacity: 0.8,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  })));
+}
+
+/* =========================================================================
+   AUDIO (master gain + mute)
+   ========================================================================= */
+let actx = null, master = null;
+let muted = localStorage.getItem('neonMuted') === '1';
+
+function audioInit() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      master = actx.createGain();
+      master.gain.value = muted ? 0 : 1;
+      master.connect(actx.destination);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume();
+}
+function tone(freq, dur, type, vol, slideTo) {
+  if (!actx || !master) return;
+  const t = actx.currentTime;
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), t + dur);
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(gain); gain.connect(master);
+  osc.start(t); osc.stop(t + dur + 0.03);
+}
+const sndShoot = () => { tone(940, 0.06, 'square', 0.035, 250); tone(160, 0.10, 'sawtooth', 0.028, 55); };
+const sndHit   = () => { tone(1150, 0.08, 'sine', 0.06, 1900); tone(620, 0.15, 'triangle', 0.04, 1300); };
+const sndMiss  = () => { tone(150, 0.12, 'sine', 0.038, 70); };
+const sndTrap  = () => { tone(220, 0.30, 'sawtooth', 0.06, 60); tone(90, 0.35, 'square', 0.045, 40); };
+const sndTax   = () => { tone(330, 0.16, 'sawtooth', 0.06, 120); setTimeout(() => tone(150, 0.32, 'square', 0.05, 50), 110); };
+const sndBonus = () => { tone(700, 0.08, 'sine', 0.05, 1400); setTimeout(() => tone(1400, 0.12, 'sine', 0.04, 2100), 70); };
+const sndStart = () => { tone(400, 0.10, 'square', 0.045, 800); setTimeout(() => tone(800, 0.16, 'square', 0.045, 1400), 90); };
+const sndOver  = () => { tone(600, 0.55, 'sawtooth', 0.05, 80); };
+const sndBeep  = () => tone(660, 0.09, 'square', 0.04);
+const sndGo    = () => { tone(1320, 0.18, 'square', 0.05, 1980); };
+
+/* =========================================================================
+   GAME STATE
+   ========================================================================= */
+const G = {
+  mode: 1,
+  state: 'menu',           // menu | countdown | playing | paused | over
+  duration: 60,
+  elapsed: 0,
+  countdown: 3.0,
+  goFlash: 0,
+  shake: 0
+};
+
+const PLAYER_PALETTE = [
+  { name:'RED',    css:'#ff2b2b' },
+  { name:'ORANGE', css:'#ff8c00' },
+  { name:'YELLOW', css:'#ffd700' },
+  { name:'GREEN',  css:'#3cff3c' },
+  { name:'BLUE',   css:'#2f7dff' },
+  { name:'PURPLE', css:'#bb44ff' }
+];
+// Defaults: P1 blue(4), P2 red(0), P3 green(3) — all distinct
+const playerColorIdx = [4, 0, 3];
+
+function makePlayer(id) {
+  return {
+    id,
+    short: 'P' + (id + 1),
+    aim: new THREE.Vector2(id === 0 ? -0.35 : id === 1 ? 0.35 : 0, id === 2 ? -0.15 : 0.15),
+    score: 0, combo: 0, bestCombo: 0, hits: 0, shots: 0,
+    multiplier: 1, multiTime: 0,
+    taxTime: 0,
+    freeze: 0,
+    timeLeft: 60,
+    out: false,
+    cooldown: 0,
+    crosshair: document.getElementById('xh' + (id + 1))
+  };
+}
+const P = [makePlayer(0), makePlayer(1), makePlayer(2)];
+
+/* =========================================================================
+   ORB DEFINITIONS — 6 unique, distinct colors
+   ========================================================================= */
+const ORB_DEFS = {
+  target: { color: 0x4169ff, type: 'reward', life: 3.2, label: 'TARGET CORE',
+    desc: '+100 pts base, boosted by combo (max ×20). 85% of spawns. Blue.' },
+  trap:   { color: 0xff1744, type: 'risk',   life: 3.8, label: 'TRAP SPIKE',
+    desc: '−150 pts and your combo resets. Screen shake. Red.' },
+  tax:    { color: 0xb300ff, type: 'risk',   life: 6.0, label: 'TAX ORB',
+    desc: 'Instantly lose 30% of your score. For 7s all points earned are halved. Purple.' },
+  time:   { color: 0xffe600, type: 'reward', life: 2.8, label: 'TIME SHARD',
+    desc: '+4 seconds added to your personal clock. Yellow.' },
+  multi:  { color: 0x22ff44, type: 'reward', life: 2.8, label: 'MULTIPLIER',
+    desc: '×3 points on everything you hit for 5 seconds. Green.' },
+  freeze: { color: 0x00ffd5, type: 'reward', life: 2.8, label: 'FREEZE CORE',
+    desc: 'Pauses your personal clock for 3 seconds. Turquoise.' }
+};
+
+const CORE_GEO = {
+  target: new THREE.IcosahedronGeometry(0.38, 0),
+  trap:   new THREE.OctahedronGeometry(0.50, 0),
+  tax:    new THREE.TorusKnotGeometry(0.24, 0.085, 64, 8, 2, 3),
+  time:   new THREE.TorusGeometry(0.44, 0.135, 8, 20),
+  multi:  new THREE.TetrahedronGeometry(0.60, 0),
+  freeze: new THREE.DodecahedronGeometry(0.42, 0)
+};
+
+/* =========================================================================
+   TARGETS
+   ========================================================================= */
+const targetRoot = new THREE.Group();
+scene.add(targetRoot);
+const targets = [];
+
+const HIT_GEO = new THREE.SphereGeometry(0.88, 10, 8);
+const HIT_MAT = new THREE.MeshBasicMaterial({ visible: false });
+const RING_GEO  = new THREE.TorusGeometry(0.82, 0.044, 6, 40);
+const RING2_GEO = new THREE.TorusGeometry(1.04, 0.020, 6, 40);
+
+const _proj = new THREE.Vector3();
+function onScreen(pos, mx, my) {
+  _proj.copy(pos).project(camera);
+  return Math.abs(_proj.x) < mx && Math.abs(_proj.y) < my && _proj.z < 1;
+}
+
+const _spawn = new THREE.Vector3();
+function findSpawnPos() {
+  for (let i = 0; i < 80; i++) {
+    _spawn.set(
+      THREE.MathUtils.randFloatSpread(26),
+      THREE.MathUtils.randFloat(1.2, 8.2),
+      THREE.MathUtils.randFloat(-18, 1)
+    );
+    let ok = true;
+    for (const t of targets) {
+      if (t.group.position.distanceToSquared(_spawn) < 6) { ok = false; break; }
+    }
+    if (!ok) continue;
+    if (!onScreen(_spawn, 0.84, 0.82)) continue;
+    return _spawn.clone();
+  }
+  return null;
+}
+
+/* ---- spawn distribution: 85% normal · 10% risk (trap/tax 2:1) · 5% reward ---- */
+function pickType() {
+  const r = Math.random();
+  if (r < 0.85) return 'target';
+  if (r < 0.95) {
+    return Math.random() < 0.70 ? 'trap' : 'tax';
+  }
+  const r2 = Math.random();
+  if (r2 < 1 / 3) return 'time';
+  if (r2 < 2 / 3) return 'multi';
+  return 'freeze';
+}
+
+function spawnTarget(forceType) {
+  const type = forceType || pickType();
+  const def = ORB_DEFS[type];
+  const color = def.color;
+
+  const pos = findSpawnPos();
+  if (!pos) return null;
+
+  const group = new THREE.Group();
+
+  const coreMat = new THREE.MeshBasicMaterial({ color });
+  const core = new THREE.Mesh(CORE_GEO[type], coreMat);
+  group.add(core);
+
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.55),
+    transparent: true, opacity: 0.9
+  });
+  group.add(new THREE.Mesh(RING_GEO, ringMat));
+
+  const ring2Mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5 });
+  const ring2 = new THREE.Mesh(RING2_GEO, ring2Mat);
+  ring2.rotation.x = Math.PI / 2;
+  group.add(ring2);
+
+  group.add(new THREE.Mesh(HIT_GEO, HIT_MAT));
+
+  group.position.copy(pos);
+  group.scale.setScalar(0.01);
+
+  const t = {
+    type, group, coreMat, ringMat, ring2Mat,
+    color,
+    baseColor: new THREE.Color(color),
+    age: 0,
+    life: def.life * (0.9 + Math.random() * 0.25),
+    baseY: pos.y,
+    phase: Math.random() * Math.PI * 2,
+    alive: true
+  };
+  group.userData.target = t;
+
+  targets.push(t);
+  targetRoot.add(group);
+  return t;
+}
+
+function removeTarget(t) {
+  if (!t.alive) return;
+  t.alive = false;
+  targetRoot.remove(t.group);
+  t.coreMat.dispose();
+  t.ringMat.dispose();
+  t.ring2Mat.dispose();
+  const i = targets.indexOf(t);
+  if (i >= 0) targets.splice(i, 1);
+}
+function clearTargets() {
+  for (let i = targets.length - 1; i >= 0; i--) removeTarget(targets[i]);
+}
+
+function updateTargets(dt) {
+  for (let i = targets.length - 1; i >= 0; i--) {
+    const t = targets[i];
+    t.age += dt;
+
+    const grow = Math.min(1, t.age / 0.16);
+    const ease = 1 - Math.pow(1 - grow, 3);
+    const remain = t.life - t.age;
+    const out = remain < 0.3 ? Math.max(0.001, remain / 0.3) : 1;
+    const pulse = 1 + Math.sin(t.age * 6.5 + t.phase) * 0.055;
+    t.group.scale.setScalar(ease * pulse * out);
+
+    const spin = t.type === 'trap' ? 4.6 : t.type === 'tax' ? 3.4 : 1.4;
+    t.group.rotation.y += dt * spin;
+    t.group.rotation.x += dt * spin * 0.55;
+    t.group.position.y = t.baseY + Math.sin(t.age * 2.2 + t.phase) * 0.18;
+
+    const p = 0.75 + Math.sin(t.age * 8 + t.phase) * 0.3;
+    t.coreMat.color.copy(t.baseColor).multiplyScalar(0.7 + p * 0.85);
+
+    if (remain < 0.9) {
+      t.ringMat.opacity = (Math.sin(t.age * 45) > 0) ? 0.95 : 0.12;
+    }
+
+    if (t.age >= t.life) {
+      if (t.type === 'target') burst(t.group.position.clone(), t.color, 9, 0.34);
+      removeTarget(t);
+    }
+  }
+}
+
+/* =========================================================================
+   EFFECTS
+   ========================================================================= */
+const effects = [];
+
+function tracer(from, to, color) {
+  const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+  const mat = new THREE.LineBasicMaterial({
+    color, transparent: true, opacity: 0.95,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const line = new THREE.Line(geo, mat);
+  scene.add(line);
+  let t = 0;
+  effects.push(dt => {
+    t += dt;
+    mat.opacity = Math.max(0, 0.95 * (1 - t / 0.09));
+    if (t > 0.09) { scene.remove(line); geo.dispose(); mat.dispose(); return false; }
+    return true;
+  });
+}
+
+function burst(pos, color, count, size) {
+  const N = count || 22;
+  const S = size || 0.2;
+  const positions = new Float32Array(N * 3);
+  const vel = [];
+  for (let i = 0; i < N; i++) {
+    positions[i*3+0] = pos.x;
+    positions[i*3+1] = pos.y;
+    positions[i*3+2] = pos.z;
+    vel.push(new THREE.Vector3().randomDirection().multiplyScalar(2.5 + Math.random() * 6));
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({
+    color, size: S, transparent: true, opacity: 1,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+
+  let t = 0;
+  const LIFE_T = 0.85;
+  effects.push(dt => {
+    t += dt;
+    const arr = geo.attributes.position.array;
+    for (let i = 0; i < N; i++) {
+      vel[i].y -= 11 * dt;
+      vel[i].multiplyScalar(1 - 1.7 * dt);
+      arr[i*3+0] += vel[i].x * dt;
+      arr[i*3+1] += vel[i].y * dt;
+      arr[i*3+2] += vel[i].z * dt;
+    }
+    geo.attributes.position.needsUpdate = true;
+    const k = 1 - t / LIFE_T;
+    mat.opacity = Math.max(0, k);
+    mat.size = S * Math.max(0.05, k);
+    if (t > LIFE_T) { scene.remove(pts); geo.dispose(); mat.dispose(); return false; }
+    return true;
+  });
+}
+
+function shockRing(pos, color) {
+  const geo = new THREE.IcosahedronGeometry(0.55, 1);
+  const mat = new THREE.MeshBasicMaterial({
+    color, wireframe: true, transparent: true, opacity: 1,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(pos);
+  scene.add(mesh);
+
+  let t = 0;
+  const LIFE_T = 0.42;
+  effects.push(dt => {
+    t += dt;
+    const k = t / LIFE_T;
+    mesh.scale.setScalar(1 + k * 4.4);
+    mesh.rotation.x += dt * 5;
+    mesh.rotation.y += dt * 7;
+    mat.opacity = Math.max(0, 1 - k);
+    if (t > LIFE_T) { scene.remove(mesh); geo.dispose(); mat.dispose(); return false; }
+    return true;
+  });
+}
+
+function popup(pos, text, color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.font = '900 74px Orbitron, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const hex = '#' + new THREE.Color(color).getHexString();
+  ctx.shadowColor = hex;
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, 128, 66);
+  ctx.shadowBlur = 12;
+  ctx.fillText(text, 128, 66);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({
+    map: tex, transparent: true, opacity: 1,
+    depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  const sp = new THREE.Sprite(mat);
+  sp.position.copy(pos);
+  sp.scale.set(2.1, 1.05, 1);
+  scene.add(sp);
+
+  let t = 0;
+  const LIFE_T = 0.9;
+  effects.push(dt => {
+    t += dt;
+    sp.position.y += dt * 2.0;
+    const k = t / LIFE_T;
+    mat.opacity = Math.max(0, 1 - k * k);
+    if (t > LIFE_T) { scene.remove(sp); tex.dispose(); mat.dispose(); return false; }
+    return true;
+  });
+}
+
+/* =========================================================================
+   DOM
+   ========================================================================= */
+const el = id => document.getElementById(id);
+const countdownEl = el('countdown');
+const overlay = el('overlay');
+const menuView = el('menuView'), pauseView = el('pauseView');
+const resultView = el('resultView'), wikiView = el('wikiView'), howtoView = el('howtoView');
+const durSlider = el('durSlider'), durValue = el('durValue');
+const bestLine = el('bestLine'), feedEl = el('feed');
+const pauseBtn = el('pauseBtn'), muteBtn = el('muteBtn');
+const uiMode = el('uiMode');
+
+const UI = P.map((p, i) => ({
+  card: el('pcard' + (i + 1)),
+  timer: el('p' + (i + 1) + 'timer'),
+  tbar: el('p' + (i + 1) + 'tbar'),
+  score: el('p' + (i + 1) + 'score'),
+  combo: el('p' + (i + 1) + 'combo'),
+  acc: el('p' + (i + 1) + 'acc'),
+  multi: el('p' + (i + 1) + 'multi'),
+  tax: el('p' + (i + 1) + 'tax'),
+  freeze: el('p' + (i + 1) + 'freeze'),
+  out: el('p' + (i + 1) + 'out')
+}));
+
+function setText(node, v) { if (node.__t !== v) { node.__t = v; node.textContent = v; } }
+function accuracy(p) { return p.shots === 0 ? 100 : (p.hits / p.shots) * 100; }
+
+function updateHUD() {
+  for (let i = 0; i < 3; i++) {
+    const p = P[i], u = UI[i];
+    setText(u.score, String(p.score));
+    setText(u.combo, String(p.combo));
+    setText(u.acc, accuracy(p).toFixed(0) + '%');
+
+    const tDisplay = p.out ? 0 : Math.ceil(p.timeLeft);
+    setText(u.timer, String(tDisplay));
+    u.timer.classList.toggle('warn', !p.out && p.timeLeft > 0 && p.timeLeft <= 10);
+    u.timer.classList.toggle('zero', p.out);
+
+    u.tbar.style.width = p.out ? '0%' : Math.max(0, Math.min(100, (p.timeLeft / G.duration) * 100)) + '%';
+
+    u.multi.classList.toggle('on', p.multiplier > 1);
+    u.tax.classList.toggle('on', p.taxTime > 0);
+    u.freeze.classList.toggle('on', p.freeze > 0);
+    u.out.classList.toggle('on', p.out);
+
+    u.card.classList.toggle('taxed', p.taxTime > 0);
+    u.card.classList.toggle('out', p.out);
+  }
+}
+
+function addFeed(player, text) {
+  const d = document.createElement('div');
+  d.className = 'feedItem';
+  d.style.color = PLAYER_PALETTE[playerColorIdx[player.id]].css;
+  d.textContent = player.short + '  ' + text;
+  feedEl.appendChild(d);
+  while (feedEl.children.length > 5) feedEl.removeChild(feedEl.firstChild);
+  setTimeout(() => { if (d.parentNode) d.parentNode.removeChild(d); }, 3300);
+}
+
+/* =========================================================================
+   SIZING
+   ========================================================================= */
+let _w = 0, _h = 0;
+function syncSize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  if (w === _w && h === _h) return;
+  _w = w; _h = h;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(w, h);
+  composer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
+}
+
+/* =========================================================================
+   CROSSHAIRS
+   ========================================================================= */
+function updateCrosshairs() {
+  const active = (G.state === 'playing' || G.state === 'countdown');
+  const w = window.innerWidth, h = window.innerHeight;
+
+  for (let i = 0; i < 3; i++) {
+    const p = P[i];
+    const show = active && i < G.mode && !p.out;
+    p.crosshair.style.opacity = show ? '1' : '0';
+    if (!show) continue;
+    const sx = (p.aim.x * 0.5 + 0.5) * w;
+    const sy = (-p.aim.y * 0.5 + 0.5) * h;
+    p.crosshair.style.transform =
+      `translate(${sx}px, ${sy}px) translate(-50%, -50%)`;
+  }
+}
+
+/* =========================================================================
+   INPUT
+   ========================================================================= */
+const keys = Object.create(null);
+const raycaster = new THREE.Raycaster();
+raycaster.far = 400;
+
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  keys[k] = true;
+  if (e.repeat) return;
+
+  if (k === 'escape' || k === 'p') { togglePause(); return; }
+
+  if (G.state === 'playing') {
+    if (k === ' ' || k === 'f') fire(P[0]);
+    if (k === 'enter' && G.mode >= 2) fire(P[1]);
+  }
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+window.addEventListener('mousemove', e => {
+  if (G.state !== 'playing' && G.state !== 'countdown') return;
+  const nx = (e.clientX / window.innerWidth) * 2 - 1;
+  const ny = -((e.clientY / window.innerHeight) * 2 - 1);
+  if (G.mode === 3) { P[2].aim.set(nx, ny); clampAim(P[2]); }
+  else if (G.mode === 1) { P[0].aim.set(nx, ny); clampAim(P[0]); }
+});
+
+renderer.domElement.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  if (G.state !== 'playing') return;
+  if (G.mode === 1) fire(P[0]);
+  else if (G.mode === 3) fire(P[2]);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && G.state === 'playing') togglePause();
+});
+
+function clampAim(p) {
+  p.aim.x = Math.max(-0.97, Math.min(0.97, p.aim.x));
+  p.aim.y = Math.max(-0.97, Math.min(0.97, p.aim.y));
+}
+
+/* =========================================================================
+   AIM UPDATE
+   ========================================================================= */
+const AIM_SPEED = 1.00;
+
+function applyAimDelta(p, ax, ay, dt) {
+  if (!ax && !ay) return;
+  const len = Math.hypot(ax, ay);
+  p.aim.x += (ax / len) * AIM_SPEED * dt;
+  p.aim.y += (ay / len) * AIM_SPEED * dt;
+  clampAim(p);
+}
+
+function updateAim(dt) {
+  // Player 1 — WASD (arrows too in 1P)
+  let ax = 0, ay = 0;
+  if (keys['w']) ay += 1;
+  if (keys['s']) ay -= 1;
+  if (keys['a']) ax -= 1;
+  if (keys['d']) ax += 1;
+  if (G.mode === 1) {
+    if (keys['arrowup']) ay += 1;
+    if (keys['arrowdown']) ay -= 1;
+    if (keys['arrowleft']) ax -= 1;
+    if (keys['arrowright']) ax += 1;
+  }
+  applyAimDelta(P[0], ax, ay, dt);
+
+  // Player 2 — arrows
+  if (G.mode >= 2) {
+    let bx = 0, by = 0;
+    if (keys['arrowup']) by += 1;
+    if (keys['arrowdown']) by -= 1;
+    if (keys['arrowleft']) bx -= 1;
+    if (keys['arrowright']) bx += 1;
+    applyAimDelta(P[1], bx, by, dt);
+  }
+  // Player 3 — mouse (handled in mousemove)
+}
+
+/* =========================================================================
+   PLAYER TIMERS — each player has their own clock
+   ========================================================================= */
+function updatePlayers(dt, tickTimers) {
+  let activeCount = 0;
+  let allOut = true;
+
+  for (let i = 0; i < G.mode; i++) {
+    const p = P[i];
+    if (!p.out) activeCount++;
+    if (p.cooldown > 0) p.cooldown -= dt;
+    if (p.multiTime > 0) {
+      p.multiTime -= dt;
+      if (p.multiTime <= 0) { p.multiTime = 0; p.multiplier = 1; }
+    }
+    if (p.taxTime > 0) {
+      p.taxTime -= dt;
+      if (p.taxTime <= 0) p.taxTime = 0;
+    }
+    if (tickTimers && !p.out) {
+      if (p.freeze > 0) {
+        p.freeze = Math.max(0, p.freeze - dt);
+      } else {
+        p.timeLeft -= dt;
+        if (p.timeLeft <= 0) {
+          p.timeLeft = 0;
+          p.out = true;
+          addFeed(p, 'OUT OF TIME');
+        }
+      }
+    }
+    if (!p.out) allOut = false;
+  }
+
+  if (tickTimers && activeCount > 0 && allOut && G.state === 'playing') {
+    endGame();
+  }
+}
+
+/* =========================================================================
+   FIRING
+   ========================================================================= */
+function flashCrosshair(p) {
+  p.crosshair.classList.remove('hit');
+  void p.crosshair.offsetWidth;
+  p.crosshair.classList.add('hit');
+}
+
+function fire(p) {
+  if (G.state !== 'playing' || p.out || p.cooldown > 0) return;
+  p.cooldown = 0.085;
+  p.shots++;
+
+  sndShoot();
+  flashCrosshair(p);
+
+  camera.updateMatrixWorld();
+  raycaster.setFromCamera(p.aim, camera);
+
+  const muzzle = camera.position.clone()
+    .add(new THREE.Vector3((p.id - 1) * 1.7, -1.8, -1.5));
+
+  const hits = raycaster.intersectObjects(targetRoot.children, true);
+  let target = null, point = null;
+
+  for (const h of hits) {
+    let o = h.object;
+    while (o && !o.userData.target) o = o.parent;
+    if (o && o.userData.target && o.userData.target.alive) {
+      target = o.userData.target;
+      point = h.point.clone();
+      break;
+    }
+  }
+
+  if (target) {
+    handleHit(p, target, point, muzzle);
+  } else {
+    p.combo = 0;
+    sndMiss();
+    const end = raycaster.ray.origin.clone()
+      .add(raycaster.ray.direction.clone().multiplyScalar(70));
+    tracer(muzzle, end, 0x5b3bff);
+  }
+
+  updateHUD();
+}
+
+function handleHit(p, target, point, muzzle) {
+  // any orb hit counts as a successful shot for accuracy
+  p.hits++;
+
+  tracer(muzzle, point, 0xbdf7ff);
+  burst(point, target.color);
+  shockRing(point, target.color);
+
+  switch (target.type) {
+    case 'trap': {
+      p.score = Math.max(0, p.score - 150);
+      p.combo = 0;
+      G.shake = 0.75;
+      popup(point, '−150', 0xff1744);
+      addFeed(p, 'TRAP −150');
+      sndTrap();
+      flashScreen('trapFlash');
+      break;
+    }
+    case 'tax': {
+      const loss = Math.floor(p.score * 0.30);
+      p.score = Math.max(0, p.score - loss);
+      p.combo = 0;
+      p.taxTime = 7;                     // 7s of halved gains
+      G.shake = 0.95;
+      popup(point, '−30%', 0xb300ff);
+      addFeed(p, 'TAX −' + loss + ' · 7s half');
+      sndTax();
+      flashScreen('taxFlash');
+      break;
+    }
+    case 'time': {
+      p.timeLeft += 4;
+      p.combo++;
+      popup(point, '+4s', 0xffe600);
+      addFeed(p, 'TIME +4s');
+      sndBonus();
+      break;
+    }
+    case 'multi': {
+      p.multiplier = 3;
+      p.multiTime = 5;
+      p.combo++;
+      popup(point, '×3', 0x22ff44);
+      addFeed(p, 'MULTI ×3 · 5s');
+      sndBonus();
+      break;
+    }
+    case 'freeze': {
+      p.freeze = 3;
+      p.combo++;
+      popup(point, 'FREEZE', 0x00ffd5);
+      addFeed(p, 'FREEZE 3s');
+      sndBonus();
+      break;
+    }
+    default: {
+      p.combo++;
+      if (p.combo > p.bestCombo) p.bestCombo = p.combo;
+
+      let pts = 100 + Math.min(p.combo, 20) * 10;
+      pts *= p.multiplier;
+      if (p.taxTime > 0) pts *= 0.5;    // taxed gains are halved
+      pts = Math.round(pts);
+
+      p.score += pts;
+      popup(point, '+' + pts, target.color);
+      addFeed(p, '+' + pts + (p.taxTime > 0 ? ' (half)' : ''));
+      sndHit();
+    }
+  }
+
+  removeTarget(target);
+}
+
+function flashScreen(id) {
+  const f = el(id);
+  f.classList.remove('on');
+  void f.offsetWidth;
+  f.classList.add('on');
+}
+
+/* =========================================================================
+   SPAWNING
+   ========================================================================= */
+let spawnTimer = 0;
+
+function updateSpawning(dt) {
+  const progress = Math.min(1, G.elapsed / G.duration);
+  const wanted = 4 + Math.floor(progress * 4);
+
+  spawnTimer -= dt;
+  if (targets.length < wanted && spawnTimer <= 0) {
+    spawnTarget();
+    spawnTimer = 0.30 - progress * 0.13;
+  }
+}
+
+/* =========================================================================
+   FLOW
+   ========================================================================= */
+function showView(name) {
+  overlay.classList.remove('hidden');
+  menuView.classList.toggle('hidden', name !== 'menu');
+  pauseView.classList.toggle('hidden', name !== 'pause');
+  resultView.classList.toggle('hidden', name !== 'result');
+  wikiView.classList.toggle('hidden', name !== 'wiki');
+  howtoView.classList.toggle('hidden', name !== 'howto');
+}
+function hideOverlay() { overlay.classList.add('hidden'); }
+
+function refreshMenuUI() {
+  const ctrl = el('ctrlList');
+  if (G.mode === 3) {
+    ctrl.innerHTML =
+      `<div><b>P1 WASD</b> + Space/F</div>
+       <div><b>P2 Arrows</b> + Enter</div>
+       <div><b>P3 Mouse</b> + Click</div>
+       <div><b>Esc</b> pause</div>`;
+  } else if (G.mode === 2) {
+    ctrl.innerHTML =
+      `<div><b>P1 WASD</b> + Space/F</div>
+       <div><b>P2 Arrows</b> + Enter</div>
+       <div><b>Esc</b> pause</div>`;
+  } else {
+    ctrl.innerHTML =
+      `<div><b>Mouse / WASD / Arrows</b> aim</div>
+       <div><b>Click / Space</b> fire</div>
+       <div><b>Esc</b> pause</div>`;
+  }
+
+  document.body.classList.remove('mode1','mode2','mode3');
+  document.body.classList.add('mode' + G.mode);
+
+  uiMode.textContent = G.mode === 1 ? 'SOLO' : G.mode === 2 ? 'DUEL' : 'TRI';
+
+  const best = +(localStorage.getItem('neonAimBest' + G.mode) || 0);
+  bestLine.textContent = best > 0 ? 'BEST ' + G.mode + 'P SCORE — ' + best : '';
+
+  rebuildColorUI();
+}
+
+/* ---------- color picker ---------- */
+function rebuildColorUI() {
+  const rows = el('colorRows');
+  rows.innerHTML = '';
+  for (let i = 0; i < G.mode; i++) {
+    const row = document.createElement('div');
+    row.className = 'colorRow';
+
+    const name = document.createElement('span');
+    name.className = 'colorName';
+    name.textContent = 'P' + (i + 1);
+    name.style.color = PLAYER_PALETTE[playerColorIdx[i]].css;
+    name.style.textShadow = '0 0 10px ' + PLAYER_PALETTE[playerColorIdx[i]].css;
+    row.appendChild(name);
+
+    for (let c = 0; c < 6; c++) {
+      const sw = document.createElement('button');
+      sw.className = 'swatch';
+      sw.style.background = PLAYER_PALETTE[c].css;
+      sw.style.boxShadow = '0 0 10px ' + PLAYER_PALETTE[c].css + '80';
+      if (playerColorIdx[i] === c) sw.classList.add('active');
+      const takenByOther = playerColorIdx.some((pc, pi) => pc === c && pi !== i && pi < G.mode);
+      if (takenByOther) sw.classList.add('taken');
+      sw.addEventListener('click', () => { selectColor(i, c); });
+      row.appendChild(sw);
+    }
+    rows.appendChild(row);
+  }
+}
+
+function selectColor(playerIdx, colorIdx) {
+  if (playerColorIdx[playerIdx] === colorIdx) return;
+  const other = playerColorIdx.indexOf(colorIdx);
+  if (other >= 0) playerColorIdx[other] = playerColorIdx[playerIdx]; // swap
+  playerColorIdx[playerIdx] = colorIdx;
+  rebuildColorUI();
+  applyPlayerColors();
+}
+
+function applyPlayerColors() {
+  for (let i = 0; i < 3; i++) {
+    const css = PLAYER_PALETTE[playerColorIdx[i]].css;
+    el('pcard' + (i + 1)).style.setProperty('--c', css);
+    el('xh' + (i + 1)).style.setProperty('--c', css);
+  }
+}
+
+/* ---------- game start / reset ---------- */
+function resetPlayer(p) {
+  p.aim.set(p.id === 0 ? -0.35 : p.id === 1 ? 0.35 : 0, p.id === 2 ? -0.15 : 0.15);
+  p.score = 0; p.combo = 0; p.bestCombo = 0;
+  p.hits = 0; p.shots = 0;
+  p.multiplier = 1; p.multiTime = 0;
+  p.taxTime = 0; p.freeze = 0;
+  p.timeLeft = G.duration;
+  p.out = false;
+  p.cooldown = 0;
+}
+
+let lastCountdownNumber = -1;
+
+function startGame() {
+  audioInit();
+  sndStart();
+
+  G.duration = +durSlider.value;
+  G.elapsed = 0;
+  G.countdown = 3.0;
+  G.goFlash = 0;
+  G.shake = 0;
+  lastCountdownNumber = -1;
+
+  for (let i = 0; i < 3; i++) resetPlayer(P[i]);
+
+  clearTargets();
+  for (let i = 0; i < 4; i++) spawnTarget('target');
+
+  spawnTimer = 0.4;
+  G.state = 'countdown';
+
+  pauseBtn.textContent = 'PAUSE';
+  countdownEl.textContent = '3';
+  countdownEl.classList.remove('on');
+  void countdownEl.offsetWidth;
+  countdownEl.classList.add('on');
+
+  hideOverlay();
+  updateHUD();
+}
+
+function togglePause() {
+  if (G.state === 'playing') {
+    G.state = 'paused';
+    pauseBtn.textContent = 'RESUME';
+    showView('pause');
+  } else if (G.state === 'paused') {
+    G.state = 'playing';
+    pauseBtn.textContent = 'PAUSE';
+    hideOverlay();
+  }
+}
+
+function endGame() {
+  if (G.state === 'over') return;
+  G.state = 'over';
+  sndOver();
+  countdownEl.classList.remove('on');
+  pauseBtn.textContent = 'PAUSE';
+
+  let title = 'ROUND COMPLETE';
+  if (G.mode > 1) {
+    let best = -1, tie = false;
+    for (let i = 0; i < G.mode; i++) {
+      if (P[i].score > best) { best = P[i].score; tie = false; }
+      else if (P[i].score === best) tie = true;
+    }
+    title = tie ? 'DRAW' : P.find(p => p.score === best).short + ' WINS';
+  }
+  el('resultTitle').textContent = title;
+
+  const grid = el('resultGrid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < G.mode; i++) {
+    const p = P[i];
+    const css = PLAYER_PALETTE[playerColorIdx[i]].css;
+    const d = document.createElement('div');
+    d.className = 'rcol';
+    d.innerHTML =
+      `<div class="rname" style="color:${css};text-shadow:0 0 10px ${css}">${p.short}</div>
+       <div class="rrow"><span>SCORE</span><b>${p.score}</b></div>
+       <div class="rrow"><span>ACCURACY</span><b>${accuracy(p).toFixed(0)}%</b></div>
+       <div class="rrow"><span>BEST COMBO</span><b>${p.bestCombo}</b></div>
+       <div class="rrow"><span>TIME LEFT</span><b>${p.out ? 0 : Math.ceil(p.timeLeft)}s</b></div>`;
+    grid.appendChild(d);
+
+    const key = 'neonAimBest' + G.mode;
+    const bestScore = +(localStorage.getItem(key) || 0);
+    if (p.score > bestScore) localStorage.setItem(key, p.score);
+  }
+
+  showView('result');
+}
+
+function quitToMenu() {
+  G.state = 'menu';
+  G.elapsed = 0;
+  countdownEl.classList.remove('on');
+  pauseBtn.textContent = 'PAUSE';
+
+  clearTargets();
+  for (let i = 0; i < 4; i++) spawnTarget('target');
+
+  for (let i = 0; i < 3; i++) resetPlayer(P[i]);
+  G.duration = +durSlider.value;
+  for (let i = 0; i < 3; i++) P[i].timeLeft = G.duration;
+
+  updateHUD();
+  refreshMenuUI();
+  showView('menu');
+}
+
+/* =========================================================================
+   WIKI BUILD
+   ========================================================================= */
+function buildWiki() {
+  const grid = el('wikiGrid');
+  grid.innerHTML = '';
+  for (const key of ['target', 'trap', 'tax', 'time', 'multi', 'freeze']) {
+    const d = ORB_DEFS[key];
+    const hex = '#' + new THREE.Color(d.color).getHexString();
+    const card = document.createElement('div');
+    card.className = 'wikiCard';
+    card.innerHTML =
+      `<div class="wikiOrb" style="--o:${hex}"></div>
+       <div class="wikiName">${d.label}</div>
+       <span class="wikiType ${d.type}">${d.type.toUpperCase()}</span>
+       <div class="wikiDesc">${d.desc}</div>`;
+    grid.appendChild(card);
+  }
+}
+buildWiki();
+
+/* =========================================================================
+   UI BINDINGS
+   ========================================================================= */
+document.querySelectorAll('.modeBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.blur();
+    G.mode = +btn.dataset.mode;
+    document.querySelectorAll('.modeBtn').forEach(b => b.classList.toggle('active', b === btn));
+    refreshMenuUI();
+    updateHUD();
+  });
+});
+
+durSlider.addEventListener('input', () => {
+  durValue.textContent = durSlider.value + 's';
+  if (G.state === 'menu') {
+    G.duration = +durSlider.value;
+    for (let i = 0; i < 3; i++) P[i].timeLeft = G.duration;
+    updateHUD();
+  }
+});
+
+el('startBtn').addEventListener('click', e => { e.currentTarget.blur(); startGame(); });
+el('resumeBtn').addEventListener('click', e => { e.currentTarget.blur(); togglePause(); });
+el('quitBtn').addEventListener('click', e => { e.currentTarget.blur(); quitToMenu(); });
+el('againBtn').addEventListener('click', e => { e.currentTarget.blur(); startGame(); });
+el('menuBtn').addEventListener('click', e => { e.currentTarget.blur(); quitToMenu(); });
+
+el('wikiBtn').addEventListener('click', e => { e.currentTarget.blur(); showView('wiki'); });
+el('wikiBackBtn').addEventListener('click', e => { e.currentTarget.blur(); showView('menu'); });
+el('howtoBtn').addEventListener('click', e => { e.currentTarget.blur(); showView('howto'); });
+el('howtoBackBtn').addEventListener('click', e => { e.currentTarget.blur(); showView('menu'); });
+
+pauseBtn.addEventListener('click', () => { pauseBtn.blur(); togglePause(); });
+
+function setMuted(m) {
+  muted = m;
+  localStorage.setItem('neonMuted', m ? '1' : '0');
+  if (master) master.gain.value = m ? 0 : 1;
+  muteBtn.textContent = m ? 'SOUND: OFF' : 'SOUND: ON';
+  muteBtn.classList.toggle('off', m);
+}
+muteBtn.addEventListener('click', () => {
+  muteBtn.blur();
+  audioInit();
+  setMuted(!muted);
+});
+
+/* =========================================================================
+   MAIN LOOP
+   ========================================================================= */
+const clock = new THREE.Clock();
+
+function updateShake(dt) {
+  if (G.shake > 0) {
+    G.shake = Math.max(0, G.shake - dt * 2.4);
+    const s = G.shake * 14;
+    renderer.domElement.style.transform =
+      `scale(1.045) translate(${(Math.random() - 0.5) * s}px, ${(Math.random() - 0.5) * s}px)`;
+  } else if (renderer.domElement.style.transform) {
+    renderer.domElement.style.transform = '';
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const dt = Math.min(clock.getDelta(), 0.05);
+  syncSize();
+
+  for (const d of decor) {
+    d.mesh.rotation.x += d.spin.x * dt;
+    d.mesh.rotation.y += d.spin.y * dt;
+    d.mesh.rotation.z += d.spin.z * dt;
+  }
+
+  switch (G.state) {
+    case 'countdown': {
+      G.countdown -= dt;
+      updateAim(dt);
+      updateSpawning(dt);
+      updateTargets(dt);
+      updatePlayers(dt, false);
+
+      const n = Math.ceil(G.countdown);
+      if (n !== lastCountdownNumber) {
+        lastCountdownNumber = n;
+        if (n > 0) {
+          countdownEl.textContent = n;
+          countdownEl.classList.remove('on');
+          void countdownEl.offsetWidth;
+          countdownEl.classList.add('on');
+          sndBeep();
+        } else {
+          countdownEl.textContent = 'GO!';
+          countdownEl.classList.remove('on');
+          void countdownEl.offsetWidth;
+          countdownEl.classList.add('on');
+          sndGo();
+          G.state = 'playing';
+          G.goFlash = 0.45;
+        }
+      }
+      updateHUD();
+      break;
+    }
+
+    case 'playing': {
+      G.elapsed += dt;
+
+      if (G.goFlash > 0) {
+        G.goFlash -= dt;
+        if (G.goFlash <= 0) countdownEl.classList.remove('on');
+      }
+
+      updateSpawning(dt);
+      updateAim(dt);
+      updateTargets(dt);
+      updatePlayers(dt, true);
+      updateHUD();
+
+      // hard safety cap: never run more than 4× the round length
+      if (G.state === 'playing' && G.elapsed > G.duration * 4) endGame();
+      break;
+    }
+
+    case 'menu':
+    case 'over': {
+      updateTargets(dt);
+      if (targets.length < 4) {
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) { spawnTarget('target'); spawnTimer = 1.1; }
+      }
+      break;
+    }
+
+    case 'paused':
+      break;
+  }
+
+  for (let i = effects.length - 1; i >= 0; i--) {
+    if (!effects[i](dt)) effects.splice(i, 1);
+  }
+
+  updateCrosshairs();
+  updateShake(dt);
+  composer.render();
+}
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+window.addEventListener('resize', syncSize);
+
+setMuted(muted);
+syncSize();
+applyPlayerColors();
+refreshMenuUI();
+for (let i = 0; i < 4; i++) spawnTarget('target');
+updateHUD();
+showView('menu');
+animate();
+</script>
+</body>
+</html>
