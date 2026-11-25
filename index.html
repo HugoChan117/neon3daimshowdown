@@ -738,6 +738,10 @@ const sndOver   = () => { tone(600, 0.55, 'sawtooth', 0.05, 80); };
 const sndBeep   = () => tone(660, 0.09, 'square', 0.04);
 const sndGo     = () => { tone(1320, 0.18, 'square', 0.05, 1980); };
 const sndBullseye = () => { tone(1600, 0.09, 'sine', 0.07, 2400); setTimeout(() => tone(2400, 0.16, 'sine', 0.06, 3200), 80); };
+const sndTrapBullseye = () => { tone(190, 0.42, 'sawtooth', 0.075, 42); setTimeout(() => tone(70, 0.55, 'square', 0.055, 30), 20); tone(311, 0.40, 'square', 0.045, 300); tone(330, 0.40, 'square', 0.045, 318);}, 90);
+
+  setTimeout(() => tone(120, 0.30, 'sawtooth', 0.05, 50), 260);
+};
 
 /* =========================================================================
    MOBILE DETECTION
@@ -1412,27 +1416,27 @@ function handleHit(p, target, point, muzzle) {
   const bullRadius = target.visRadius * Math.sqrt(0.2) * target.group.scale.x;
   const isBull = perpDist < bullRadius;
 
-  if (isBull) {
-    p.bullseyes++;
-    flashCrosshair(p, true);
-    // extra visual pop
-    burst(point, 0xffe600, 14, 0.30);
-    sndBullseye();
-  }
-
+if (isBull) {
+  p.bullseyes++;
+  flashCrosshair(p, true);
+  burst(point, 0xffe600, 14, 0.30);
+  if (target.type !== 'trap') sndBullseye();
+}
+  
   tracer(muzzle, point, isBull ? 0xffe600 : 0xbdf7ff);
   burst(point, target.color);
   shockRing(point, target.color);
 
   switch (target.type) {
-    case 'trap': {
+      case 'trap': {
       const penalty = isBull ? 600 : 150;
       p.score = Math.max(0, p.score - penalty);
       p.combo = 0;
       G.shake = isBull ? 1.15 : 0.75;
       popup(point, (isBull ? 'BULLSEYE −' : '−') + penalty, 0xff1744, isBull);
       addFeed(p, (isBull ? 'BULLSEYE TRAP −' : 'TRAP −') + penalty);
-      sndTrap();
+      if (isBull) sndTrapBullseye();
+      else        sndTrap();
       flashScreen('trapFlash');
       break;
     }
@@ -1445,7 +1449,8 @@ function handleHit(p, target, point, muzzle) {
       p.taxTime = dur;
       popup(point, isBull ? 'BULLSEYE −50%' : '−30%', 0xb300ff, isBull);
       addFeed(p, (isBull ? 'BULLSEYE TAX −' : 'TAX −') + loss + ' · ' + dur + 's half');
-      sndTax();
+      if (isBull) sndTrapBullseye();
+      else        sndTax();
       flashScreen('taxFlash');
       break;
     }
