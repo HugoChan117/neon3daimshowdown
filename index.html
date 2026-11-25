@@ -472,9 +472,9 @@
         <div class="howtoSection">
           <h3>CONTROLS</h3>
           <ul>
-            <li><b>1P</b> — Mouse aim · Click fire · Space / WASD fallback</li>
-            <li><b>2P</b> — P1: Mouse + Click · P2: WASD + F/Space</li>
-            <li><b>3P</b> — P1: Mouse + Click · P2: WASD + F/Space · P3: Arrows + Shift/Enter</li>
+            <li><b>1P</b> — Mouse aim · Click fire · Space fallback</li>
+            <li><b>2P</b> — P1: Mouse + Click · P2: WASD + Q/E/Space</li>
+            <li><b>3P</b> — P1: Mouse + Click · P2: WASD + Q/E/Space · P3: Arrows + Enter/Shift/Ctrl</li>
             <li><b>Esc / P</b> — Pause · <b>Sound button</b> — Mute</li>
           </ul>
         </div>
@@ -1136,12 +1136,9 @@ window.addEventListener('keydown', e => {
   if (k === 'escape' || k === 'p') { togglePause(); return; }
 
   if (G.state === 'playing') {
-    // P1 — Space only as a solo fallback (mouse is the primary fire)
-    if (G.mode === 1 && k === ' ') fire(P[0]);
-    // P2 — WASD player fires with F or Space
-    if (G.mode >= 2 && (k === 'f' || k === ' ')) fire(P[1]);
-    // P3 — Arrows player fires with Shift or Enter
-    if (G.mode >= 3 && (k === 'shift' || k === 'enter')) fire(P[2]);
+    if (G.mode === 1 && k === ' ') fire(P[0]);     // P1 — Space only as a solo fallback (mouse is the primary fire)
+    if (G.mode >= 2 && (k === 'q' || k === 'e' || k === ' ')) fire(P[1]);     // P2 — WASD player fires with Q, E, or Space
+    if (G.mode >= 3 && (k === 'enter' || e.code === 'ShiftRight' || e.code === 'ControlRight')) fire(P[2]);    // P3 — Arrows player fires with Enter, Shift, or Ctrl
   }
 
 });
@@ -1330,7 +1327,6 @@ function handleHit(p, target, point, muzzle) {
       p.score = Math.max(0, p.score - loss);
       p.combo = 0;
       p.taxTime = 7;                     // 7s of halved gains
-      G.shake = 0.95;
       popup(point, '−30%', 0xb300ff);
       addFeed(p, 'TAX −' + loss + ' · 7s half');
       sndTax();
@@ -1419,21 +1415,21 @@ function hideOverlay() { overlay.classList.add('hidden'); }
 
 function refreshMenuUI() {
   const ctrl = el('ctrlList');
-    if (G.mode === 3) {
+   if (G.mode === 3) {
     ctrl.innerHTML =
       `<div><b>P1 Mouse</b> + Click</div>
-       <div><b>P2 WASD</b> + F / Space</div>
-       <div><b>P3 Arrows</b> + Shift / Enter</div>
+       <div><b>P2 WASD</b> + Q / E / Space</div>
+       <div><b>P3 Arrows</b> + Enter / Shift / Ctrl</div>
        <div><b>Esc</b> pause</div>`;
   } else if (G.mode === 2) {
     ctrl.innerHTML =
       `<div><b>P1 Mouse</b> + Click</div>
-       <div><b>P2 WASD</b> + F / Space</div>
+       <div><b>P2 WASD</b> + Q / E / Space</div>
        <div><b>Esc</b> pause</div>`;
   } else {
     ctrl.innerHTML =
       `<div><b>Mouse</b> aim + click fire</div>
-       <div><b>Space</b> alt fire · <b>WASD</b> fallback aim</div>
+       <div><b>Space</b> fire fallback</div>
        <div><b>Esc</b> pause</div>`;
   }
 
