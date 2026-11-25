@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>NEON AIM SHOWDOWN - Max 4P</title>
+<title>NEON AIM SHOWDOWN - 4P</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -1233,20 +1233,6 @@ renderer.domElement.addEventListener('mousedown', e => {
   fire(P[0]);
 });
 
-/* ---- touch controls (mobile) ---- */
-renderer.domElement.addEventListener('touchstart', e => {
-  if (G.state !== 'playing') return;
-  e.preventDefault();
-  const t = e.changedTouches[0];
-  if (!t) return;
-  audioInit();
-  const nx = (t.clientX / window.innerWidth) * 2 - 1;
-  const ny = -((t.clientY / window.innerHeight) * 2 - 1);
-  P[0].aim.set(nx, ny);
-  clampAim(P[0]);
-  fire(P[0]);
-}, { passive: false });
-
 renderer.domElement.addEventListener('touchmove', e => {
   if (G.state !== 'playing' && G.state !== 'countdown') return;
   e.preventDefault();
@@ -1657,8 +1643,8 @@ function setPlayerCount(n) {
   updateHUD();
 }
 
-  const DURATIONS = [20, 30, 45, 60, 75, 90, 105, 120, 150, 180, 240, 300];
-  let durIndex = 3;
+  const DURATIONS = [20, 30, 40, 50, 60, 75, 90, 105, 120, 150, 180, 240, 300];
+  let durIndex = 5;
 
 function setDurationIndex(i) {
   durIndex = Math.max(0, Math.min(DURATIONS.length - 1, i));
@@ -1952,7 +1938,7 @@ if (isMobile) G.mode = 1;
 setMuted(muted);
 syncSize();
 applyPlayerColors();
-setDurationIndex(3);   // 60s
+setDurationIndex(4);
 refreshMenuUI();
 for (let i = 0; i < 4; i++) spawnTarget('target');
 updateHUD();
