@@ -473,8 +473,8 @@
           <h3>CONTROLS</h3>
           <ul>
             <li><b>1P</b> — Mouse aim · Click fire · Space fallback</li>
-            <li><b>2P</b> — P1: Mouse + Click · P2: WASD + Q/E/Space</li>
-            <li><b>3P</b> — P1: Mouse + Click · P2: WASD + Q/E/Space · P3: Arrows + Enter/Shift/Ctrl</li>
+            <li><b>2P</b> — P1: Mouse + Click · P2: WASD + F/Space</li>
+            <li><b>3P</b> — P1: Mouse + Click · P2: WASD + F/Space · P3: Arrows + Enter/Shift/Ctrl</li>
             <li><b>Esc / P</b> — Pause · <b>Sound button</b> — Mute</li>
           </ul>
         </div>
@@ -1137,7 +1137,7 @@ window.addEventListener('keydown', e => {
 
   if (G.state === 'playing') {
     if (G.mode === 1 && k === ' ') fire(P[0]);     // P1 — Space only as a solo fallback (mouse is the primary fire)
-    if (G.mode >= 2 && (k === 'q' || k === 'e' || k === ' ')) fire(P[1]);     // P2 — WASD player fires with Q, E, or Space
+    if (G.mode >= 2 && (k === 'f'|| k === ' ')) fire(P[1]);     // P2 — WASD player fires with F or Space
     if (G.mode >= 3 && (k === 'enter' || k === 'shift' || e.code === 'ControlRight')) fire(P[2]);    // P3 — Arrows player fires with Enter, Shift, or Ctrl
   }
 
@@ -1418,13 +1418,13 @@ function refreshMenuUI() {
    if (G.mode === 3) {
     ctrl.innerHTML =
       `<div><b>P1 Mouse</b> + Click</div>
-       <div><b>P2 WASD</b> + Q / E / Space</div>
+       <div><b>P2 WASD</b> + F / Space</div>
        <div><b>P3 Arrows</b> + Enter / Shift / Ctrl</div>
        <div><b>Esc</b> pause</div>`;
   } else if (G.mode === 2) {
     ctrl.innerHTML =
       `<div><b>P1 Mouse</b> + Click</div>
-       <div><b>P2 WASD</b> + Q / E / Space</div>
+       <div><b>P2 WASD</b> + F / Space</div>
        <div><b>Esc</b> pause</div>`;
   } else {
     ctrl.innerHTML =
