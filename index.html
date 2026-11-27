@@ -208,6 +208,7 @@
   }
   .panel h1 span{color:var(--p2);text-shadow:0 0 10px var(--p2),0 0 34px var(--p2);}
   .panel h1 span.showdown{color:#00f0ff;text-shadow:0 0 10px #00f0ff,0 0 34px #00f0ff;}
+  #keyboardNotice{margin-top:10px;color:#ff0000;font-size:10px;font-weight:700;letter-spacing:.12em;}
 
   .hidden{display:none !important;}
 
@@ -470,6 +471,7 @@
     <!-- ============ MENU ============ -->
     <div id="menuView">
       <h1>NEON<span>AIM</span>3D<span class="showdown">SHOWDOWN</span></h1>
+      <p id="keyboardNotice" class="hidden">RECOMMENDED KEYBOARD WITH AT LEAST 6-KEY ROLLOVER (6KRO)</p>
       <div class="stepperRow" id="playerStepper">
         <label>PLAYERS</label>
         <div class="stepper">
@@ -1599,6 +1601,11 @@ function refreshMenuUI() {
 
   document.body.classList.remove('mode1','mode2','mode3','mode4');
   document.body.classList.add('mode' + G.mode);
+  const keyboardNotice = el('keyboardNotice');
+  keyboardNotice.classList.toggle('hidden', G.mode < 2);
+  keyboardNotice.textContent = G.mode === 4
+    ? 'RECOMMENDED KEYBOARD WITH AT LEAST 6-KEY ROLLOVER (6KRO)'
+    : 'RECOMMENDED KEYBOARD WITH AT LEAST 2-KEY ROLLOVER (2KRO)';
 
   uiMode.textContent = ['SOLO','DUEL','TRI','QUAD'][G.mode - 1];
 
