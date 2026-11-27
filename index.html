@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>NEON AIM SHOWDOWN - 4P</title>
+<title>NEON 3D AIM SHOWDOWN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -374,7 +374,7 @@
         <div class="pc-timerbar"><div class="pc-timerfill" id="p2tbar"></div></div>
         <div class="pc-sub"><span>SCORE<b id="p2score">0</b></span><span>COMBO<b id="p2combo">0</b></span><span>ACC<b id="p2acc">100%</b></span></div>
         <div class="pc-chips">
-          <span class="chip multi" id="p2multi">×3</span>
+          <span class="chip multi" id="p2multi">MULTI</span>
           <span class="chip tax" id="p2tax">TAXED</span>
           <span class="chip freeze" id="p2freeze">FROZEN</span>
           <span class="chip out" id="p2out">OUT</span>
@@ -531,21 +531,9 @@
         <div class="howtoSection">
           <h3>SCORING</h3>
           <ul>
-            <li>Blue target: <b>100 pts</b> + 10 per combo (max combo ×20)</li>
+            <li>Normal target: <b>100 pts</b> + 10 per combo (max combo ×20)</li>
             <li>Combo resets on a miss or on a risk orb</li>
-            <li>Multiplier orb: <b>×3</b> points for 5s</li>
-            <li><span class="gold">BULLSEYE</span> — hit the inner 30% of the orb area to <b>double the effect</b> of any orb.</li>
-          </ul>
-        </div>
-        <div class="howtoSection">
-          <h3>BULLSEYE EFFECTS</h3>
-          <ul>
-            <li>Target: <b>2× points</b></li>
-            <li>Time: <b>+8s</b> instead of +4s</li>
-            <li>Multi: <b>×6</b> instead of ×3</li>
-            <li>Freeze: <b>6s</b> instead of 3s</li>
-            <li>Trap: <b>−1000</b> instead of −200</li>
-            <li>Tax: <b>−50%</b> &amp; taxed for 10s (vs −30% &amp; 6s)</li>
+            <li><span class="gold">BULLSEYE</span> — hit the inner orb area to <b>double the effect</b> of any orb.</li>
           </ul>
         </div>
         <div class="howtoSection">
@@ -555,13 +543,6 @@
             <li>Time shards add <b>+4s</b> to your clock.</li>
             <li>Freeze orb pauses your clock for 3s.</li>
             <li>The round ends when all players are out.</li>
-          </ul>
-        </div>
-        <div class="howtoSection">
-          <h3>RISK ORBS</h3>
-          <ul>
-            <li><span class="k">Red Trap</span> — −200 pts and your combo resets.</li>
-            <li><span class="k">Purple Tax</span> — instantly lose 30% of your score · for 6s all points earned are halved.</li>
           </ul>
         </div>
       </div>
@@ -1668,7 +1649,7 @@ function setPlayerCount(n) {
   updateHUD();
 }
 
-  const DURATIONS = [20, 30, 40, 50, 60, 75, 90, 105, 120, 150, 180, 240, 300];
+  const DURATIONS = [20, 30, 40, 50, 60, 75, 90, 105, 120, 150, 180, 240, 300, 360];
   let durIndex = 5;
 
 function setDurationIndex(i) {
