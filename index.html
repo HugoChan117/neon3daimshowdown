@@ -207,6 +207,7 @@
     text-shadow:0 0 10px var(--p1),0 0 34px var(--p1),0 0 80px var(--violet);
   }
   .panel h1 span{color:var(--p2);text-shadow:0 0 10px var(--p2),0 0 34px var(--p2);}
+  .panel h1 span.showdown{color:#00f0ff;text-shadow:0 0 10px #00f0ff,0 0 34px #00f0ff;}
 
   .hidden{display:none !important;}
 
@@ -364,6 +365,9 @@
   body.mobile .pc-score{font-size:24px;}
   body.mobile .swatch{width:24px;height:24px;}
   body.mobile .controls{font-size:11px;}
+  body.mobile .pcard.p1 .pc-name,
+  body.mobile #xh1 .x-label,
+  body.mobile #colorRows .colorName{display:none;}
 </style>
 </head>
 <body>
@@ -376,7 +380,7 @@
         <div class="pc-timerbar"><div class="pc-timerfill" id="p1tbar"></div></div>
         <div class="pc-sub"><span>TIME<b class="pc-timer" id="p1timer">1:00</b></span><span>COMBO<b id="p1combo">0</b></span><span>ACC<b id="p1acc">100%</b></span></div>
         <div class="pc-chips">
-          <span class="chip multi" id="p1multi">×3</span>
+          <span class="chip multi" id="p1multi">MULTI</span>
           <span class="chip tax" id="p1tax">TAXED</span>
           <span class="chip freeze" id="p1freeze">FROZEN</span>
           <span class="chip out" id="p1out">OUT</span>
@@ -398,7 +402,7 @@
         <div class="pc-timerbar"><div class="pc-timerfill" id="p3tbar"></div></div>
         <div class="pc-sub"><span>TIME<b class="pc-timer" id="p3timer">1:00</b></span><span>COMBO<b id="p3combo">0</b></span><span>ACC<b id="p3acc">100%</b></span></div>
         <div class="pc-chips">
-          <span class="chip multi" id="p3multi">×3</span>
+          <span class="chip multi" id="p3multi">MULTI</span>
           <span class="chip tax" id="p3tax">TAXED</span>
           <span class="chip freeze" id="p3freeze">FROZEN</span>
           <span class="chip out" id="p3out">OUT</span>
@@ -409,7 +413,7 @@
         <div class="pc-timerbar"><div class="pc-timerfill" id="p4tbar"></div></div>
         <div class="pc-sub"><span>TIME<b class="pc-timer" id="p4timer">1:00</b></span><span>COMBO<b id="p4combo">0</b></span><span>ACC<b id="p4acc">100%</b></span></div>
         <div class="pc-chips">
-          <span class="chip multi" id="p4multi">×3</span>
+          <span class="chip multi" id="p4multi">MULTI</span>
           <span class="chip tax" id="p4tax">TAXED</span>
           <span class="chip freeze" id="p4freeze">FROZEN</span>
           <span class="chip out" id="p4out">OUT</span>
@@ -465,7 +469,7 @@
 
     <!-- ============ MENU ============ -->
     <div id="menuView">
-      <h1>NEON<span>AIM</span>SHOWDOWN</h1>
+      <h1>NEON<span>AIM</span>3D<span class="showdown">SHOWDOWN</span></h1>
       <div class="stepperRow" id="playerStepper">
         <label>PLAYERS</label>
         <div class="stepper">
@@ -517,7 +521,7 @@
       <div class="wikiNote">
         85% of spawns are normal blue targets · 10% are risk orbs · 5% are rewards.<br>
         Every orb has a unique color. Combo raises target value · missing or hitting a risk orb resets your combo.<br>
-        <b style="color:#ffe600">BULLSEYE:</b> hit the inner 30% of any orb's area to double its effect.
+        <b style="color:#ffe600">BULLSEYE:</b> hit the inner 30% of any orb's area to increase its effect.
       </div>
       <div><button id="wikiBackBtn" class="cta" style="margin-top:22px">BACK</button></div>
     </div>
@@ -533,8 +537,8 @@
         <div class="howtoSection">
           <h3>CONTROLS</h3>
           <ul>
-            <li><b>1P</b> — Mouse aim · Click fire · Space fallback</li>
-            <li><b>2P</b> — P1: Mouse + Click · P2: Arrows arm + Enter/Shift/Ctrl fire</li>
+            <li><b>1P</b> — Mouse aim · Click to fire · Space fallback</li>
+            <li><b>2P</b> — P1: Mouse aim + Click to fire · P2: Arrows arm + Enter/Shift/Ctrl fire</li>
             <li><b>3P</b> — P3: WASD aim + F fire</li>
             <li><b>4P</b> — P4: IJKL aim + P fire</li>
             <li><b>Mobile</b> — Tap to aim &amp; fire (1P only)</li>
@@ -546,7 +550,7 @@
           <ul>
             <li>Normal target: <b>100 pts</b> + 10 per combo (max combo ×20)</li>
             <li>Combo resets on a miss or on a risk orb</li>
-            <li><span class="gold">BULLSEYE</span> — hit the inner orb area to <b>double the effect</b> of any orb.</li>
+            <li><span class="gold">BULLSEYE</span> — hit the inner orb area to <b>increase the effect</b> of any orb.</li>
           </ul>
         </div>
         <div class="howtoSection">
@@ -803,11 +807,11 @@ const ORB_DEFS = {
   tax:    { color: 0xb300ff, type: 'risk',   life: 6.0, label: 'TAX ORB', visRadius: 0.40,
     desc: 'Lose 30% of your score. For 5s all points earned are halved. Purple. Bullseye: −50% and taxed 8s.' },
   time:   { color: 0xffe600, type: 'reward', life: 2.8, label: 'TIME SHARD', visRadius: 0.65,
-    desc: '+3 seconds added to your personal clock. Yellow. Bullseye: +6s.' },
+    desc: '+3 seconds added to your personal clock. Yellow. Bullseye: +5s.' },
   multi:  { color: 0x22ff44, type: 'reward', life: 2.8, label: 'MULTIPLIER', visRadius: 0.60,
     desc: '×3 points on everything you hit for 5 seconds. Green. Bullseye: ×5.' },
   freeze: { color: 0x00ffd5, type: 'reward', life: 2.8, label: 'FREEZE CORE', visRadius: 0.42,
-    desc: 'Pauses your personal clock for 4 seconds. Turquoise. Bullseye: 8s.' }
+    desc: 'Pauses your personal clock for 4 seconds. Turquoise. Bullseye: 7s.' }
 };
 
 const CORE_GEO = {
@@ -1477,7 +1481,7 @@ if (isBull) {
       break;
     }
     case 'time': {
-      const add = isBull ? 6 : 3;
+      const add = isBull ? 5 : 3;
       const maxTime = Math.max(G.duration + 6, G.duration * 1.1);
       p.timeLeft = Math.min(maxTime, p.timeLeft + add);
       p.combo++;
@@ -1488,7 +1492,7 @@ if (isBull) {
     }
     case 'multi': {
       const m = isBull ? 5 : 3;
-      p.multiplier = m;
+      p.multiplier = Math.max(p.multiplier, m);
       p.multiTime = 5;
       p.combo++;
       popup(point, 'BULLSEYE ×' + m, 0x22ff44, isBull);
@@ -1497,7 +1501,7 @@ if (isBull) {
       break;
     }
     case 'freeze': {
-      const fz = isBull ? 8 : 4;
+      const fz = isBull ? 7 : 4;
       p.freeze = fz;
       p.combo++;
       popup(point, isBull ? 'BULLSEYE FREEZE' : 'FREEZE', 0x00ffd5, isBull);
