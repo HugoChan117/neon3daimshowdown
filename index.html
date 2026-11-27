@@ -1293,7 +1293,9 @@ const AIM_SPEED = 1.00;
 function applyAimDelta(p, ax, ay, dt) {
   if (!ax && !ay) return;
   const len = Math.hypot(ax, ay);
-  p.aim.x += (ax / len) * AIM_SPEED * dt;
+  // Aim coordinates are normalized; compensate for aspect ratio so pixels move evenly.
+  const horizontalScale = window.innerHeight / Math.max(1, window.innerWidth);
+  p.aim.x += (ax / len) * AIM_SPEED * dt * horizontalScale;
   p.aim.y += (ay / len) * AIM_SPEED * dt;
   clampAim(p);
 }
@@ -1982,7 +1984,6 @@ function animate() {
    ========================================================================= */
 window.addEventListener('resize', syncSize);
 
-// mobile: force 1P
 if (isMobile) G.mode = 1;
 
 setMuted(muted);
